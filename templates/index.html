@@ -646,16 +646,14 @@ input::placeholder { color: var(--muted); }
       <input type="text" id="repo_url" placeholder="https://github.com/owner/repo" />
     </div>
 
-    <div class="input-row">
-      <div class="input-group">
-        <label>Anthropic API Key *</label>
-        <input type="password" id="api_key" placeholder="sk-ant-…" />
-      </div>
-      <div class="input-group">
-        <label>GitHub Token (optional)</label>
-        <input type="password" id="github_token" placeholder="ghp_… (private repos)" />
-      </div>
+    <div id="apiKeySection" class="input-group">
+      <label>Anthropic API Key *
+        <span id="apiKeyBadge" style="display:none;margin-left:8px;background:rgba(0,255,136,0.15);color:var(--accent);font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid rgba(0,255,136,0.3);">✓ configured on server</span>
+      </label>
+      <input type="password" id="api_key" placeholder="sk-ant-… (or set ANTHROPIC_API_KEY on server)" />
     </div>
+    <!-- GitHub token is set via GITHUB_TOKEN env var on server — hidden from UI -->
+    <input type="hidden" id="github_token" value="" />
 
     <button class="btn" id="analyzeBtn" onclick="analyze()">
       ⚡ Run Assessment
@@ -834,6 +832,26 @@ function renderResults(result) {
   document.getElementById('results').className = 'visible';
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// Check server config on load
+async function checkServerConfig() {
+  try {
+    const r = await fetch('/config');
+    const cfg = await r.json();
+    if (cfg.has_anthropic_key) {
+      document.getElementById('api_key').placeholder = 'sk-ant-… (or leave empty — server key configured)';
+      document.getElementById('apiKeyBadge').style.display = 'inline';
+    }
+    if (cfg.has_github_token) {
+      // GitHub token configured server-side, no need to show field
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px;color:var(--accent);margin-top:4px;';
+      note.textContent = '✓ GitHub token configured on server';
+      document.getElementById('apiKeySection').appendChild(note);
+    }
+  } catch(e) {}
+}
+window.addEventListener('load', checkServerConfig);
 
 async function analyze() {
   const repoUrl = document.getElementById('repo_url').value.trim();
