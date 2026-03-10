@@ -202,12 +202,24 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/config")
+def config():
+    """Tell the frontend which keys are configured server-side."""
+    return jsonify({
+        "has_anthropic_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "has_github_token": bool(os.environ.get("GITHUB_TOKEN")),
+    })
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
     repo_url = data.get("repo_url", "").strip()
-    github_token = data.get("github_token", "").strip() or os.environ.get("GITHUB_TOKEN")
-    api_key = data.get("api_key", "").strip() or os.environ.get("ANTHROPIC_API_KEY")
+    # Always prefer server-side env vars, user input is fallback only
+    _user_github_token = (data.get("github_token") or "").strip()
+    _user_api_key = (data.get("api_key") or "").strip()
+    github_token = os.environ.get("GITHUB_TOKEN") or _user_github_token or None
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or _user_api_key or None
     max_files = int(data.get("max_files", 15))
 
     if not repo_url:
