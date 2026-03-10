@@ -227,7 +227,8 @@ def analyze():
                 yield f"data: {json.dumps({'error': 'Repository not found or private. Add a GitHub token.'})}\n\n"
                 return
 
-            yield f"data: {json.dumps({'step': 'fetch_files', 'msg': f'Collecting files from {repo_info.get(\"name\", repo)}…'})}\n\n"
+            repo_display = repo_info.get('name', repo)
+            yield f"data: {json.dumps({'step': 'fetch_files', 'msg': 'Collecting files from ' + repo_display + '\u2026'})}\n\n"
             files = collect_repo_files(owner, repo, github_token, max_files)
             if not files:
                 yield f"data: {json.dumps({'error': 'No readable files found in repository.'})}\n\n"
