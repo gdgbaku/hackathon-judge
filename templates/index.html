@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hackathon Code Judge</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080b10;
+  --bg2: #0d1117;
+  --bg3: #161b22;
+  --border: #21262d;
+  --accent: #00ff88;
+  --accent2: #00d4ff;
+  --accent3: #ff6b35;
+  --warn: #ffd700;
+  --red: #ff4757;
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --card: #0d1117;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+  animation: fadeDown 0.6s ease;
+}
+
+.header-badge {
+  display: inline-block;
+  background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.header p {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+/* Form card */
+.form-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease 0.1s both;
+}
+
+.form-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-title::before {
+  content: '//';
+  color: var(--muted);
+  font-weight: 300;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,255,136,0.1);
+}
+
+input::placeholder { color: var(--muted); }
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
+
+.btn {
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 14px 24px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  background: #00ffaa;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0,255,136,0.3);
+}
+
+.btn:active { transform: translateY(0); }
+
+.btn:disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Progress */
+.progress-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  display: none;
+}
+
+.progress-card.visible { display: block; animation: fadeUp 0.4s ease; }
+
+.progress-steps { display: flex; flex-direction: column; gap: 12px; }
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+
+.step.active { color: var(--accent); }
+.step.done { color: var(--text); }
+
+.step-icon {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.step.active .step-icon {
+  border-color: var(--accent);
+  background: rgba(0,255,136,0.1);
+  color: var(--accent);
+  animation: pulse 1.5s infinite;
+}
+
+.step.done .step-icon {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(0,255,136,0); }
+}
+
+/* Error */
+.error-card {
+  background: rgba(255,71,87,0.08);
+  border: 1px solid rgba(255,71,87,0.3);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  display: none;
+  color: var(--red);
+  font-size: 13px;
+}
+.error-card.visible { display: block; animation: fadeUp 0.4s ease; }
+
+/* Results */
+#results { display: none; }
+#results.visible { display: block; animation: fadeUp 0.5s ease; }
+
+/* Repo header */
+.repo-header {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.repo-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.repo-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.repo-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tag {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 3px 10px;
+}
+
+.tag.lang { border-color: rgba(0,212,255,0.3); color: var(--accent2); }
+
+/* Overall score */
+.overall-score {
+  text-align: center;
+  min-width: 120px;
+}
+
+.score-big {
+  font-family: 'Syne', sans-serif;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.score-label {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* Score cards grid */
+.scores-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) { .scores-grid { grid-template-columns: 1fr; } }
+
+.score-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.2s, transform 0.2s;
+  animation: fadeUp 0.5s ease both;
+}
+
+.score-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.score-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.score-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.score-card-icon { font-size: 18px; }
+
+.score-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.score-tier {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.score-bar {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+}
+
+.score-feedback {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Strengths / Weaknesses */
+.sw-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) { .sw-grid { grid-template-columns: 1fr; } }
+
+.sw-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.sw-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sw-title.green { color: var(--accent); }
+.sw-title.amber { color: var(--warn); }
+
+.sw-item {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.sw-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* Verdict */
+.verdict-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.verdict-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.verdict-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.rec-badge {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.rec-advance { background: rgba(0,255,136,0.15); color: var(--accent); border: 1px solid rgba(0,255,136,0.4); }
+.rec-borderline { background: rgba(255,215,0,0.1); color: var(--warn); border: 1px solid rgba(255,215,0,0.3); }
+.rec-reject { background: rgba(255,71,87,0.1); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+
+.verdict-text {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.tech-stack { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tech-tag {
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--accent2);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Score colors */
+.c-red { color: #ff4757; }
+.c-orange { color: #ff6b35; }
+.c-yellow { color: #ffd700; }
+.c-green { color: #00ff88; }
+.c-cyan { color: #00d4ff; }
+
+.bar-red { background: #ff4757; }
+.bar-orange { background: #ff6b35; }
+.bar-yellow { background: #ffd700; }
+.bar-green { background: #00ff88; }
+.bar-cyan { background: linear-gradient(90deg, #00ff88, #00d4ff); }
+
+.tier-red { background: rgba(255,71,87,0.15); color: #ff4757; }
+.tier-orange { background: rgba(255,107,53,0.15); color: #ff6b35; }
+.tier-yellow { background: rgba(255,215,0,0.15); color: #ffd700; }
+.tier-green { background: rgba(0,255,136,0.15); color: #00ff88; }
+.tier-cyan { background: rgba(0,212,255,0.15); color: #00d4ff; }
+
+/* Rubric table */
+.rubric {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease 0.3s both;
+}
+
+.rubric-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.rubric-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.rubric-row:last-child { border-bottom: none; }
+.rubric-range { font-weight: 700; width: 40px; }
+.rubric-label { font-weight: 600; width: 120px; }
+.rubric-desc { color: var(--muted); flex: 1; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 48px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+/* Animations */
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.score-card:nth-child(1) { animation-delay: 0.1s; }
+.score-card:nth-child(2) { animation-delay: 0.2s; }
+.score-card:nth-child(3) { animation-delay: 0.3s; }
+.score-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">⚡ AI-Powered · Claude</div>
+    <h1>Hackathon Code Judge</h1>
+    <p>Paste a GitHub repo URL · Get an instant expert assessment</p>
+  </div>
+
+  <!-- Rubric -->
+  <div class="rubric">
+    <div class="rubric-title">// Scoring Rubric</div>
+    <div class="rubric-row"><span class="rubric-range c-red">0–4</span><span class="rubric-label c-red">Non-Functional</span><span class="rubric-desc">Prototype is non-functional or severely unstable. Fails to demonstrate core concept.</span></div>
+    <div class="rubric-row"><span class="rubric-range c-orange">5–8</span><span class="rubric-label c-orange">Basic</span><span class="rubric-desc">Functional but lacks key features or has significant bugs. Integration is basic or unreliable.</span></div>
+    <div class="rubric-row"><span class="rubric-range c-yellow">9–12</span><span class="rubric-label c-yellow">Functional</span><span class="rubric-desc">Clear architecture with working core features. Integration is mostly stable.</span></div>
+    <div class="rubric-row"><span class="rubric-range c-green">13–16</span><span class="rubric-label c-green">Robust</span><span class="rubric-desc">Reliable prototype that seamlessly integrates with the target app's ecosystem.</span></div>
+    <div class="rubric-row"><span class="rubric-range c-cyan">17–20</span><span class="rubric-label c-cyan">Exceptional</span><span class="rubric-desc">Technically sound, fully working, and feels native to the target application.</span></div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-title">Analyze Repository</div>
+
+    <div class="input-group">
+      <label>GitHub Repository URL *</label>
+      <input type="text" id="repo_url" placeholder="https://github.com/owner/repo" />
+    </div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>Anthropic API Key *</label>
+        <input type="password" id="api_key" placeholder="sk-ant-…" />
+      </div>
+      <div class="input-group">
+        <label>GitHub Token (optional)</label>
+        <input type="password" id="github_token" placeholder="ghp_… (private repos)" />
+      </div>
+    </div>
+
+    <button class="btn" id="analyzeBtn" onclick="analyze()">
+      ⚡ Run Assessment
+    </button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-card" id="progressCard">
+    <div class="progress-steps">
+      <div class="step" id="step1">
+        <div class="step-icon">1</div>
+        <span>Fetching repository metadata from GitHub…</span>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-icon">2</div>
+        <span id="step2txt">Collecting source files…</span>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-icon">3</div>
+        <span>Sending to Claude for deep analysis…</span>
+      </div>
+      <div class="step" id="step4">
+        <div class="step-icon">4</div>
+        <span>Generating assessment report…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-card" id="errorCard"></div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Repo header -->
+    <div class="repo-header" id="repoHeader"></div>
+
+    <!-- Score cards -->
+    <div class="scores-grid" id="scoresGrid"></div>
+
+    <!-- Strengths / Weaknesses -->
+    <div class="sw-grid" id="swGrid"></div>
+
+    <!-- Verdict -->
+    <div class="verdict-card" id="verdictCard"></div>
+
+  </div>
+
+  <div class="footer">Built for hackathon judges · Powered by Claude Sonnet · GitHub API</div>
+</div>
+
+<script>
+function scoreColor(s) {
+  if (s <= 4)  return 'red';
+  if (s <= 8)  return 'orange';
+  if (s <= 12) return 'yellow';
+  if (s <= 16) return 'green';
+  return 'cyan';
+}
+
+function tierClass(s) {
+  return 'tier-' + scoreColor(s);
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    const icon = el.querySelector('.step-icon');
+    icon.textContent = i < n ? '✓' : String(i);
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorCard');
+  el.textContent = '⚠ ' + msg;
+  el.className = 'error-card visible';
+  document.getElementById('progressCard').className = 'progress-card';
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+function renderResults(result) {
+  const ri = result.repo_info;
+  const scores = result.scores;
+  const feedback = result.category_feedback;
+  const tierInfo = result.tier_info;
+
+  // Repo header
+  const overall = result.overall_score;
+  const oc = scoreColor(Math.round(overall));
+  document.getElementById('repoHeader').innerHTML = `
+    <div>
+      <div class="repo-name">${ri.name}</div>
+      <div class="repo-desc">${ri.description || 'No description provided'}</div>
+      <div class="repo-tags">
+        ${ri.language ? `<span class="tag lang">${ri.language}</span>` : ''}
+        <span class="tag">⭐ ${ri.stars}</span>
+        <span class="tag">📁 ${ri.file_count} files analyzed</span>
+        <span class="tag"><a href="${ri.url}" target="_blank" style="color:inherit;text-decoration:none">🔗 View Repo</a></span>
+      </div>
+    </div>
+    <div class="overall-score">
+      <div class="score-big c-${oc}">${overall}</div>
+      <div class="score-label">/ 20 avg</div>
+      <div class="tier-badge ${tierClass(Math.round(overall))}">${result.overall_tier.label}</div>
+    </div>
+  `;
+
+  // Score cards
+  const cats = [
+    { key: 'prototype_quality', label: 'Prototype Quality', icon: '🔧' },
+    { key: 'code_quality',      label: 'Code Quality & Architecture', icon: '🏗️' },
+    { key: 'innovation',        label: 'Innovation & Creativity', icon: '💡' },
+    { key: 'documentation',     label: 'Documentation & README', icon: '📚' },
+  ];
+
+  document.getElementById('scoresGrid').innerHTML = cats.map(cat => {
+    const score = scores[cat.key];
+    const tier = tierInfo[cat.key];
+    const c = scoreColor(score);
+    const pct = (score / 20 * 100).toFixed(1);
+    return `
+      <div class="score-card">
+        <div class="score-card-header">
+          <div class="score-card-title">${cat.label}</div>
+          <div class="score-card-icon">${cat.icon}</div>
+        </div>
+        <div class="score-number c-${c}">${score}<span style="font-size:16px;color:var(--muted)">/20</span></div>
+        <div class="score-tier c-${c}">${tier.label}</div>
+        <div class="score-bar"><div class="score-bar-fill bar-${c}" style="width:0%" data-width="${pct}%"></div></div>
+        <div class="score-feedback">${feedback[cat.key] || ''}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Animate bars after render
+  setTimeout(() => {
+    document.querySelectorAll('.score-bar-fill').forEach(el => {
+      el.style.width = el.dataset.width;
+    });
+  }, 100);
+
+  // Strengths / Weaknesses
+  const strengths = result.strengths || [];
+  const weaknesses = result.weaknesses || [];
+  document.getElementById('swGrid').innerHTML = `
+    <div class="sw-card">
+      <div class="sw-title green">✅ Strengths</div>
+      ${strengths.map(s => `<div class="sw-item"><div class="sw-dot" style="background:var(--accent)"></div><span>${s}</span></div>`).join('')}
+    </div>
+    <div class="sw-card">
+      <div class="sw-title amber">⚠ Areas to Improve</div>
+      ${weaknesses.map(w => `<div class="sw-item"><div class="sw-dot" style="background:var(--warn)"></div><span>${w}</span></div>`).join('')}
+    </div>
+  `;
+
+  // Verdict
+  const rec = result.judge_recommendation || 'borderline';
+  const recMap = {
+    advance:    ['✅ ADVANCE',    'rec-advance'],
+    borderline: ['⚡ BORDERLINE', 'rec-borderline'],
+    reject:     ['❌ REJECT',     'rec-reject'],
+  };
+  const [recLabel, recClass] = recMap[rec] || recMap.borderline;
+  const techs = (result.tech_stack_detected || []).map(t => `<span class="tech-tag">${t}</span>`).join('');
+
+  document.getElementById('verdictCard').innerHTML = `
+    <div class="verdict-header">
+      <div class="verdict-title">// Judge Verdict</div>
+      <div class="rec-badge ${recClass}">${recLabel}</div>
+    </div>
+    <div class="verdict-text">${result.overall_verdict || ''}</div>
+    ${techs ? `<div style="margin-bottom:8px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Tech Stack Detected</div><div class="tech-stack">${techs}</div>` : ''}
+  `;
+
+  document.getElementById('results').className = 'visible';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function analyze() {
+  const repoUrl = document.getElementById('repo_url').value.trim();
+  const apiKey = document.getElementById('api_key').value.trim();
+  const githubToken = document.getElementById('github_token').value.trim();
+
+  if (!repoUrl) { alert('Please enter a GitHub repository URL'); return; }
+  if (!apiKey) { alert('Please enter your Anthropic API key'); return; }
+
+  // Reset UI
+  document.getElementById('errorCard').className = 'error-card';
+  document.getElementById('results').className = '';
+  document.getElementById('progressCard').className = 'progress-card visible';
+  document.getElementById('analyzeBtn').disabled = true;
+  setStep(1);
+
+  try {
+    const response = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_url: repoUrl, api_key: apiKey, github_token: githubToken, max_files: 15 }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+
+        if (data.error) { showError(data.error); return; }
+
+        if (data.step === 'fetch_meta') setStep(1);
+        if (data.step === 'fetch_files') setStep(2);
+        if (data.step === 'analyzing') {
+          setStep(3);
+          if (data.file_count) document.getElementById('step2txt').textContent = `${data.file_count} files collected`;
+        }
+        if (data.step === 'done') {
+          setStep(4);
+          setTimeout(() => {
+            document.getElementById('progressCard').className = 'progress-card';
+            document.getElementById('analyzeBtn').disabled = false;
+            renderResults(data.result);
+          }, 500);
+        }
+      }
+    }
+  } catch (e) {
+    showError('Network error: ' + e.message);
+  }
+}
+
+// Allow Enter key on URL field
+document.getElementById('repo_url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>
