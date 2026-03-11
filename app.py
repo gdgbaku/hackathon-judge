@@ -131,9 +131,9 @@ def get_commit_history(owner: str, repo: str, token: Optional[str]) -> list:
     for c in commits:
         result.append({
             "sha": c.get("sha", "")[:7],
-            "message": c.get("commit", {}).get("message", "")[:100],
-            "author": c.get("commit", {}).get("author", {}).get("name", ""),
-            "date": c.get("commit", {}).get("author", {}).get("date", ""),
+            "message": (c.get("commit", {}).get("message") or "")[:100],
+            "author": (c.get("commit", {}).get("author", {}).get("name") or ""),
+            "date": (c.get("commit", {}).get("author", {}).get("date") or ""),
         })
     return result
 
@@ -159,7 +159,7 @@ def build_prompt(repo_info: dict, files_text: str, repo_url: str,
     )
 
     commits_text = "\n".join(
-        "  [" + c["date"][:10] + "] " + c["author"] + ": " + c["message"]
+        "  [" + (c["date"] or "")[:10] + "] " + (c["author"] or "unknown") + ": " + (c["message"] or "")
         for c in commit_history[:20]
     ) or "  No commits found"
 
@@ -336,11 +336,11 @@ Authenticity score 0-100:
 
 ## Repository
 - URL: """ + repo_url + """
-- Name: """ + repo_info.get("name", "Unknown") + """
-- Description: """ + repo_info.get("description", "No description") + """
-- Language: """ + repo_info.get("language", "Unknown") + """
-- Created: """ + repo_info.get("created_at", "Unknown") + """
-- Last Push: """ + repo_info.get("pushed_at", "Unknown") + """
+- Name: """ + (repo_info.get("name") or "Unknown") + """
+- Description: """ + (repo_info.get("description") or "No description") + """
+- Language: """ + (repo_info.get("language") or "Unknown") + """
+- Created: """ + (repo_info.get("created_at") or "Unknown") + """
+- Last Push: """ + (repo_info.get("pushed_at") or "Unknown") + """
 - Is Fork: """ + str(repo_info.get("fork", False)) + """
 """ + topic_section + criteria_section + """
 ## Commit History
@@ -407,7 +407,7 @@ def analyze():
             yield "data: " + json.dumps({"step": "fetch_commits", "msg": "Analysing commit history…"}) + "\n\n"
             commit_history = get_commit_history(owner, repo, github_token)
 
-            repo_display = repo_info.get("name", repo)
+            repo_display = (repo_info.get("name") or repo)
             yield "data: " + json.dumps({"step": "fetch_files", "msg": "Collecting files from " + repo_display + "…"}) + "\n\n"
             files = collect_repo_files(owner, repo, github_token, max_files)
             if not files:
@@ -454,14 +454,14 @@ def analyze():
             result["overall_tier"]  = get_tier(int(round(avg)))
             result["mode"]          = mode
             result["repo_info"] = {
-                "name":        repo_info.get("name", repo),
-                "description": repo_info.get("description", ""),
-                "language":    repo_info.get("language", "Unknown"),
+                "name":        (repo_info.get("name") or repo),
+                "description": (repo_info.get("description") or ""),
+                "language":    (repo_info.get("language") or "Unknown"),
                 "stars":       repo_info.get("stargazers_count", 0),
                 "forks":       repo_info.get("forks_count", 0),
                 "is_fork":     repo_info.get("fork", False),
-                "created_at":  repo_info.get("created_at", ""),
-                "pushed_at":   repo_info.get("pushed_at", ""),
+                "created_at":  (repo_info.get("created_at") or ""),
+                "pushed_at":   (repo_info.get("pushed_at") or ""),
                 "url":         repo_url,
                 "file_count":  file_count,
                 "commit_count": commit_count,
@@ -489,4 +489,3 @@ def analyze():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
-
