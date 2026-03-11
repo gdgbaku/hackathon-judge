@@ -1,12 +1,20 @@
 """
-Hackathon Code Judge — Flask Web App v5
-- Hackathon topic/name loaded from hackathon.json (set once by organizer)
-- No success criteria input — topic is static and pre-defined
-- Three modes: standard | advanced | full
+Hackathon Code Judge — Flask Web App v6
+5 unified scoring categories, all 0-20:
+  1. prototype_quality
+  2. code_quality
+  3. innovation_doc_topic   (Innovation + Documentation + Topic Alignment)
+  4. security               (hardcoded keys, injection risks, unvalidated inputs)
+  5. performance_maintainability (nested loops, blocking ops, leaks, complexity, DRY)
+
+Two modes:
+  standard — above 5 categories, no cheat detection
+  full      — above 5 categories + cheat detection
 """
 
 import os
 import json
+import time
 from pathlib import Path
 from typing import Optional, Union
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
@@ -15,24 +23,23 @@ import anthropic
 
 app = Flask(__name__)
 
-# ── Load hackathon config (set once, never changed by users) ─────────────────
+# ── Load hackathon config ──────────────────────────────────────────────────────
 HACKATHON_CONFIG_FILE = Path(__file__).parent / "hackathon.json"
 
 def load_hackathon_config() -> dict:
-    """Load from hackathon.json, fall back to env vars, then empty defaults."""
     defaults = {
-        "name": os.environ.get("HACKATHON_NAME", "Hackathon"),
-        "edition": os.environ.get("HACKATHON_EDITION", ""),
-        "topic": os.environ.get("HACKATHON_TOPIC", ""),
+        "name":          os.environ.get("HACKATHON_NAME", "Hackathon"),
+        "edition":       os.environ.get("HACKATHON_EDITION", ""),
+        "topic":         os.environ.get("HACKATHON_TOPIC", ""),
         "judging_notes": os.environ.get("HACKATHON_JUDGING_NOTES", ""),
     }
     if HACKATHON_CONFIG_FILE.exists():
         try:
             data = json.loads(HACKATHON_CONFIG_FILE.read_text())
-            # env vars override file if set
             for key in defaults:
-                if os.environ.get("HACKATHON_" + key.upper()):
-                    data[key] = os.environ.get("HACKATHON_" + key.upper())
+                env_val = os.environ.get("HACKATHON_" + key.upper())
+                if env_val:
+                    data[key] = env_val
             return {**defaults, **data}
         except Exception:
             pass
@@ -40,7 +47,7 @@ def load_hackathon_config() -> dict:
 
 HACKATHON = load_hackathon_config()
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# ── Constants ──────────────────────────────────────────────────────────────────
 SKIP_EXTENSIONS = {
     ".png",".jpg",".jpeg",".gif",".svg",".ico",".webp",".bmp",
     ".mp4",".mp3",".wav",".zip",".tar",".gz",".lock",".pdf",
@@ -163,13 +170,22 @@ def get_tier(score: int) -> dict:
 SYSTEM_PROMPT = """You are a senior software engineer and expert hackathon judge.
 Return ONLY valid JSON — no markdown fences, no extra text."""
 
+# Human-readable category names for the frontend
+CATEGORY_META = {
+    "prototype_quality":          {"label": "Prototype Quality",                        "icon": "🔧"},
+    "code_quality":               {"label": "Code Quality & Architecture",               "icon": "🏗️"},
+    "innovation_doc_topic":       {"label": "Innovation, Documentation & Topic Fit",     "icon": "💡"},
+    "security":                   {"label": "Security",                                  "icon": "🔒"},
+    "performance_maintainability":{"label": "Performance & Maintainability",             "icon": "⚡"},
+}
+
 
 def build_prompt(repo_info: dict, files_text: str, repo_url: str,
                  commit_history: list, mode: str) -> str:
 
-    hackathon_name    = HACKATHON.get("name") or "Hackathon"
-    hackathon_topic   = HACKATHON.get("topic") or ""
-    judging_notes     = HACKATHON.get("judging_notes") or ""
+    hackathon_name  = HACKATHON.get("name") or "Hackathon"
+    hackathon_topic = HACKATHON.get("topic") or ""
+    judging_notes   = HACKATHON.get("judging_notes") or ""
 
     rubric = "\n".join(
         "  " + str(lo) + "-" + str(hi) + ": " + lbl + " — " + desc
@@ -186,158 +202,127 @@ def build_prompt(repo_info: dict, files_text: str, repo_url: str,
         if judging_notes:
             topic_block += "\n## Judging Notes\n" + judging_notes + "\n"
 
-    # ── Mode-specific task instructions ──────────────────────────────────────
-    if mode == "standard":
-        task_block = """## Your Tasks
+    topic_instruction = (
+        "Consider innovation of idea AND quality of documentation AND how well it fits the hackathon topic: " + hackathon_topic
+        if hackathon_topic else
+        "Consider innovation of idea AND quality of documentation (no specific topic defined)"
+    )
 
-### TASK 1 — STANDARD SCORING (score 0-20 each)
-- prototype_quality: Is it functional, stable, and complete?
-- code_quality: Architecture, patterns, readability, modularity, error handling
-- innovation: Novelty of idea, creative technical approaches
-- documentation: README clarity, setup instructions, inline comments
+    # ── Shared 5-category scoring block used by both modes ────────────────────
+    scoring_tasks = """## Your Scoring Tasks — 5 Categories, all scored 0-20
 
-### TASK 2 — TOPIC ALIGNMENT
-""" + ("- topic_alignment: How well does this project match the hackathon topic? (score 0-20)" if hackathon_topic else "- topic_alignment: No topic defined. Set to null.") + """
+### CATEGORY 1 — prototype_quality (0-20)
+Assess: Is the prototype functional and stable? Does the core feature work end-to-end?
+Are there critical bugs or crashes? Is the UX coherent? Is it a complete working demo?
 
-Return this JSON:
-{
-  "scores": {
-    "prototype_quality": <int 0-20>,
-    "code_quality": <int 0-20>,
-    "innovation": <int 0-20>,
-    "documentation": <int 0-20>,
-    "topic_alignment": <int 0-20 or null>
-  },
-  "strengths": ["<s1>","<s2>","<s3>"],
-  "weaknesses": ["<w1>","<w2>","<w3>"],
-  "category_feedback": {
-    "prototype_quality": "<2-3 sentences>",
-    "code_quality": "<2-3 sentences>",
-    "innovation": "<2-3 sentences>",
-    "documentation": "<2-3 sentences>",
-    "topic_alignment": "<2-3 sentences or null>"
-  },
-  "code_analysis": null,
-  "originality": null,
-  "overall_verdict": "<3-4 sentence verdict>",
-  "judge_recommendation": "advance"|"borderline"|"reject",
-  "disqualify_recommendation": false,
-  "disqualify_reason": null,
-  "tech_stack_detected": ["<tech>"]
-}"""
+### CATEGORY 2 — code_quality (0-20)
+Assess: Code architecture, design patterns, readability, modularity, naming conventions,
+separation of concerns, error handling, DRY principle.
 
-    elif mode == "advanced":
-        task_block = """## Your Tasks
+### CATEGORY 3 — innovation_doc_topic (0-20)
+Assess ALL THREE together as one combined score:
+- Innovation: novelty of idea, creative technical approach, unique problem-solving
+- Documentation: README quality, setup instructions, inline comments, clarity
+- Topic Alignment: """ + topic_instruction + """
 
-### TASK 1 — STANDARD SCORING (score 0-20 each)
-- prototype_quality, code_quality, innovation, documentation
+### CATEGORY 4 — security (0-20)
+Assess security posture of the entire codebase:
+- Hardcoded API keys, passwords, secrets in source code
+- SQL injection risks or unsanitized query construction
+- Unvalidated/unsanitized user inputs used in sensitive operations
+- Exposed credentials in config files or environment handling
+- Missing authentication or authorization checks
+- Insecure HTTP usage where HTTPS is needed
+Score 20 = no issues found. Deduct per issue severity.
+List up to 5 specific issues found (file + line context if possible).
 
-### TASK 2 — TOPIC ALIGNMENT
-""" + ("- topic_alignment: How well does this match the hackathon topic? (0-20)" if hackathon_topic else "- topic_alignment: null") + """
+### CATEGORY 5 — performance_maintainability (0-20)
+Assess BOTH performance AND maintainability as one combined score:
+Performance issues:
+- Nested loops O(n²) or worse on non-trivial data
+- Blocking synchronous I/O calls that should be async
+- Redundant DB/API queries inside loops
+- Loading entire large datasets into memory unnecessarily
+- Inefficient data structures for the use case
+Maintainability issues:
+- Deeply nested conditions (4+ levels)
+- Functions over 100 lines with no decomposition
+- Magic numbers/strings without constants
+- Copy-pasted code blocks (DRY violations)
+- Confusing or misleading variable/function names
+Score 20 = clean, efficient, well-structured. Deduct per issue found.
+List up to 5 specific issues found."""
 
-### TASK 3 — DEEP CODE ANALYSIS (score each 0-10)
-Examine every file:
-- SECURITY: hardcoded secrets/API keys, SQL injection, unvalidated inputs, exposed credentials
-- PERFORMANCE: O(n²)+ nested loops, blocking calls, redundant DB queries in loops, memory leaks
-- MAINTAINABILITY: deeply nested conditions, functions >100 lines, magic numbers, copy-paste blocks
+    # ── Cheat detection block (full mode only) ─────────────────────────────────
+    cheat_block = ""
+    if mode == "full":
+        cheat_block = """
+## Cheat Detection Task
 
-Return this JSON:
-{
-  "scores": {
-    "prototype_quality": <int 0-20>,
-    "code_quality": <int 0-20>,
-    "innovation": <int 0-20>,
-    "documentation": <int 0-20>,
-    "topic_alignment": <int 0-20 or null>
-  },
-  "strengths": ["<s1>","<s2>","<s3>"],
-  "weaknesses": ["<w1>","<w2>","<w3>"],
-  "category_feedback": {
-    "prototype_quality": "<2-3 sentences>",
-    "code_quality": "<2-3 sentences>",
-    "innovation": "<2-3 sentences>",
-    "documentation": "<2-3 sentences>",
-    "topic_alignment": "<2-3 sentences or null>"
-  },
-  "code_analysis": {
-    "security_issues": ["<issue>"],
-    "performance_issues": ["<issue>"],
-    "complexity_issues": ["<issue>"],
-    "security_score": <int 0-10>,
-    "performance_score": <int 0-10>,
-    "maintainability_score": <int 0-10>
-  },
-  "originality": null,
-  "overall_verdict": "<3-4 sentence verdict>",
-  "judge_recommendation": "advance"|"borderline"|"reject",
-  "disqualify_recommendation": false,
-  "disqualify_reason": null,
-  "tech_stack_detected": ["<tech>"]
-}"""
+Analyze commit history and code carefully. Be a detective.
 
-    else:  # full
-        task_block = """## Your Tasks
+RED FLAGS (raise suspicion):
+- Single giant initial commit containing all code (classic pre-built dump)
+- Commit timestamps outside reasonable hackathon hours
+- Code style is inconsistent — looks like multiple different projects merged
+- README is too polished and comprehensive for a hackathon
+- Core logic is thin wrappers around existing libraries — minimal original work
+- Project structure matches a known boilerplate template exactly
+- Repo is a fork of another project
+- Git history was rewritten or force-pushed
+- Comments or file names reference a different project name
 
-### TASK 1 — STANDARD SCORING (score 0-20 each)
-- prototype_quality, code_quality, innovation, documentation
+GREEN FLAGS (genuine hackathon work):
+- Multiple commits showing iterative development
+- Commit messages reference debugging, fixing, trying things
+- Code has TODOs, rough edges, commented-out experiments
+- README has known issues or next steps section
+- Evidence of learning or pivoting mid-hackathon
 
-### TASK 2 — TOPIC ALIGNMENT
-""" + ("- topic_alignment: How well does this match the hackathon topic? (0-20)" if hackathon_topic else "- topic_alignment: null") + """
+Authenticity scoring:
+- 0-30: Almost certainly pre-built or plagiarized
+- 31-55: Suspicious — significant pre-existing work
+- 56-75: Mixed — some pre-built, some hackathon work
+- 76-100: Genuine hackathon project"""
 
-### TASK 3 — DEEP CODE ANALYSIS (score each 0-10)
-- SECURITY: hardcoded secrets, SQL injection, unvalidated inputs, exposed credentials
-- PERFORMANCE: O(n²)+ loops, blocking calls, redundant queries, memory leaks
-- MAINTAINABILITY: deeply nested conditions, functions >100 lines, copy-paste blocks
-
-### TASK 4 — CHEAT DETECTION (authenticity_score 0-100)
-RED FLAGS: single giant initial commit, timestamps outside hackathon hours, inconsistent
-code style suggesting merged projects, overly polished README, core logic is thin wrapper,
-repo is a fork, git history rewritten, comments reference different project names.
-
-GREEN FLAGS: multiple incremental commits, commit messages show debugging/experimenting,
-code has TODOs and rough edges, README has known issues section, evidence of pivoting.
-
-Scoring: 0-30 = plagiarized, 31-55 = suspicious, 56-75 = mixed, 76-100 = genuine.
-
-Return this JSON:
-{
-  "scores": {
-    "prototype_quality": <int 0-20>,
-    "code_quality": <int 0-20>,
-    "innovation": <int 0-20>,
-    "documentation": <int 0-20>,
-    "topic_alignment": <int 0-20 or null>
-  },
-  "strengths": ["<s1>","<s2>","<s3>"],
-  "weaknesses": ["<w1>","<w2>","<w3>"],
-  "category_feedback": {
-    "prototype_quality": "<2-3 sentences>",
-    "code_quality": "<2-3 sentences>",
-    "innovation": "<2-3 sentences>",
-    "documentation": "<2-3 sentences>",
-    "topic_alignment": "<2-3 sentences or null>"
-  },
-  "code_analysis": {
-    "security_issues": ["<issue>"],
-    "performance_issues": ["<issue>"],
-    "complexity_issues": ["<issue>"],
-    "security_score": <int 0-10>,
-    "performance_score": <int 0-10>,
-    "maintainability_score": <int 0-10>
-  },
-  "originality": {
+    # ── JSON schema ────────────────────────────────────────────────────────────
+    originality_schema = """"originality": null""" if mode != "full" else """"originality": {
     "authenticity_score": <int 0-100>,
     "verdict": "genuine"|"suspicious"|"likely_prebuilt"|"plagiarized",
-    "red_flags": ["<flag>"],
-    "green_flags": ["<flag>"],
+    "red_flags": ["<flag1>","<flag2>"],
+    "green_flags": ["<flag1>","<flag2>"],
     "commit_pattern_analysis": "<2-3 sentences>",
     "explanation": "<3-4 sentences>"
+  }"""
+
+    disqualify = ('"disqualify_recommendation": true|false,\n  "disqualify_reason": "<reason or null>"'
+                  if mode == "full" else
+                  '"disqualify_recommendation": false,\n  "disqualify_reason": null')
+
+    json_schema = """{
+  "scores": {
+    "prototype_quality": <int 0-20>,
+    "code_quality": <int 0-20>,
+    "innovation_doc_topic": <int 0-20>,
+    "security": <int 0-20>,
+    "performance_maintainability": <int 0-20>
   },
-  "overall_verdict": "<3-4 sentence verdict>",
+  "category_feedback": {
+    "prototype_quality": "<2-3 sentences>",
+    "code_quality": "<2-3 sentences>",
+    "innovation_doc_topic": "<2-3 sentences covering innovation, docs, and topic fit>",
+    "security": "<2-3 sentences>",
+    "performance_maintainability": "<2-3 sentences>"
+  },
+  "security_issues": ["<specific issue with file/context>"],
+  "performance_issues": ["<specific issue with file/context>"],
+  "strengths": ["<s1>","<s2>","<s3>"],
+  "weaknesses": ["<w1>","<w2>","<w3>"],
+  """ + originality_schema + """,
+  "overall_verdict": "<3-4 sentence overall judge verdict>",
   "judge_recommendation": "advance"|"borderline"|"reject",
-  "disqualify_recommendation": true|false,
-  "disqualify_reason": "<reason or null>",
-  "tech_stack_detected": ["<tech>"]
+  """ + disqualify + """,
+  "tech_stack_detected": ["<tech1>","<tech2>"]
 }"""
 
     return (
@@ -350,11 +335,13 @@ Return this JSON:
         "- Created: " + (repo_info.get("created_at") or "Unknown") + "\n"
         "- Last Push: " + (repo_info.get("pushed_at") or "Unknown") + "\n"
         "- Is Fork: " + str(repo_info.get("fork", False)) + "\n"
-        + topic_block +
-        "\n## Commit History\n" + commits_text + "\n"
-        "\n## Scoring Rubric (0-20)\n" + rubric + "\n"
-        "\n## Repository Files\n" + files_text + "\n\n"
-        + task_block
+        + topic_block
+        + "\n## Commit History\n" + commits_text + "\n"
+        + "\n## Scoring Rubric (0-20)\n" + rubric + "\n"
+        + "\n## Repository Files\n" + files_text + "\n\n"
+        + scoring_tasks
+        + cheat_block
+        + "\n\nReturn EXACTLY this JSON:\n" + json_schema
     )
 
 
@@ -366,13 +353,13 @@ def index():
 
 @app.route("/config")
 def config():
-    """Return server config to the frontend (no secrets)."""
     return jsonify({
         "has_anthropic_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
         "has_github_token":  bool(os.environ.get("GITHUB_TOKEN")),
         "hackathon_name":    HACKATHON.get("name") or "",
         "hackathon_edition": HACKATHON.get("edition") or "",
         "hackathon_topic":   HACKATHON.get("topic") or "",
+        "category_meta":     CATEGORY_META,
     })
 
 
@@ -391,7 +378,7 @@ def analyze():
         return jsonify({"error": "Repository URL is required"}), 400
     if not api_key:
         return jsonify({"error": "Anthropic API key is required"}), 400
-    if mode not in ("standard", "advanced", "full"):
+    if mode not in ("standard", "full"):
         mode = "standard"
 
     owner, repo = parse_github_url(repo_url)
@@ -418,22 +405,19 @@ def analyze():
 
             file_count   = len(files)
             commit_count = len(commit_history)
-            mode_labels  = {"standard": "Standard", "advanced": "Advanced + Deep Code", "full": "Full + Cheat Detection"}
+            mode_label   = "Standard (5 categories)" if mode == "standard" else "Full + Cheat Detection"
             yield "data: " + json.dumps({
                 "step": "analyzing",
-                "msg": "Running " + mode_labels.get(mode, mode) + " assessment on " + str(file_count) + " files…",
+                "msg": "Running " + mode_label + " on " + str(file_count) + " files…",
                 "file_count": file_count,
             }) + "\n\n"
 
             files_text = "\n\n".join("### " + p + "\n```\n" + c + "\n```" for p, c in files.items())
             prompt = build_prompt(repo_info, files_text, repo_url, commit_history, mode)
 
-            # Use streaming so Railway/proxies don't time out on long Claude calls.
-            # Heartbeat pings are sent every ~5s to keep the connection alive.
-            client = anthropic.Anthropic(api_key=api_key)
+            client    = anthropic.Anthropic(api_key=api_key)
             raw_chunks = []
-            import time
-            last_ping = time.time()
+            last_ping  = time.time()
 
             with client.messages.stream(
                 model="claude-sonnet-4-20250514",
@@ -443,7 +427,6 @@ def analyze():
             ) as stream:
                 for text_chunk in stream.text_stream:
                     raw_chunks.append(text_chunk)
-                    # Send a heartbeat ping every 5 s to keep connection alive
                     now = time.time()
                     if now - last_ping >= 5:
                         yield "data: " + json.dumps({"step": "heartbeat", "msg": "Claude is thinking…"}) + "\n\n"
@@ -455,15 +438,16 @@ def analyze():
             if raw.endswith("```"):       raw = raw[:-3]
             raw = raw.strip()
 
-            result       = json.loads(raw)
-            scores       = result.get("scores", {})
-            score_vals   = [v for v in scores.values() if v is not None]
-            avg          = sum(score_vals) / len(score_vals) if score_vals else 0
+            result     = json.loads(raw)
+            scores     = result.get("scores", {})
+            score_vals = [v for v in scores.values() if v is not None]
+            avg        = sum(score_vals) / len(score_vals) if score_vals else 0
 
             result["tier_info"]     = {k: get_tier(v) for k, v in scores.items() if v is not None}
             result["overall_score"] = round(avg, 1)
             result["overall_tier"]  = get_tier(int(round(avg)))
             result["mode"]          = mode
+            result["category_meta"] = CATEGORY_META
             result["hackathon"]     = {
                 "name":    HACKATHON.get("name") or "",
                 "edition": HACKATHON.get("edition") or "",

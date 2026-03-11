@@ -11,55 +11,50 @@
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
 .container{max-width:960px;margin:0 auto;padding:40px 20px;position:relative;z-index:1}
-
-/* Header */
 .header{text-align:center;margin-bottom:40px;animation:fadeDown .6s ease}
 .badge{display:inline-block;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:3px;padding:6px 16px;border-radius:20px;margin-bottom:20px;text-transform:uppercase}
 h1{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:800;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 50%,#a78bfa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
 .header p{color:var(--muted);font-size:13px}
-
-/* Cards */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:24px}
 .card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
 .card-title::before{content:'//';color:var(--muted);font-weight:300}
-
-/* Hackathon info banner */
-.hackathon-banner{background:linear-gradient(135deg,rgba(0,255,136,.06),rgba(0,212,255,.06));border:1px solid rgba(0,255,136,.2);border-radius:12px;padding:22px 28px;margin-bottom:24px;animation:fadeUp .6s ease .1s both}
-.hackathon-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin-bottom:4px}
-.hackathon-edition{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.hackathon-banner{background:linear-gradient(135deg,rgba(0,255,136,.06),rgba(0,212,255,.06));border:1px solid rgba(0,255,136,.2);border-radius:12px;padding:22px 28px;margin-bottom:24px;animation:fadeUp .6s ease .1s both;display:none}
+.hackathon-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin-bottom:12px}
 .hackathon-topic-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
 .hackathon-topic-text{font-size:13px;color:var(--text);line-height:1.7;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:12px 16px}
-.no-topic{font-size:12px;color:var(--muted);font-style:italic}
-
-/* Input */
+.rubric-row{display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.rubric-row:last-child{border-bottom:none}
+.rrange{font-weight:700;width:36px}.rlabel{font-weight:600;width:110px}.rdesc{color:var(--muted);flex:1}
+.cats-overview{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:700px){.cats-overview{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:440px){.cats-overview{grid-template-columns:1fr 1fr}}
+.cat-chip{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center}
+.cat-chip-icon{font-size:18px;margin-bottom:6px}
+.cat-chip-label{font-size:10px;font-weight:600;color:var(--muted);line-height:1.4}
+.cat-chip-score{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);margin-top:4px}
 label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
 input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:12px 16px;outline:none;transition:border-color .2s,box-shadow .2s}
 input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,255,136,.1)}
 input::placeholder{color:var(--muted)}
 .input-group{margin-bottom:20px}
-
-/* Mode cards */
-.mode-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:600px){.mode-grid{grid-template-columns:1fr}}
-.mode-card{background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:20px;cursor:pointer;transition:all .2s;user-select:none}
-.mode-card:hover{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.03)}
-.mode-card.selected{border-color:var(--accent);background:rgba(0,255,136,.06)}
-.mode-icon{font-size:22px;margin-bottom:10px}
-.mode-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.mode-label-txt{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+@media(max-width:500px){.mode-grid{grid-template-columns:1fr}}
+.mode-card{background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:22px;cursor:pointer;transition:all .2s;user-select:none}
+.mode-card:hover{border-color:rgba(0,255,136,.3)}
+.mode-card.selected{border-color:var(--accent);background:rgba(0,255,136,.05)}
+.mode-icon{font-size:26px;margin-bottom:10px}
+.mode-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
 .mode-card.selected .mode-name{color:var(--accent)}
-.mode-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.mode-includes{font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:10px}
+.mode-includes span{display:block}
+.mode-includes span::before{content:'+ ';color:var(--accent)}
 .mode-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px}
-.tag-fast{background:rgba(0,255,136,.12);color:var(--accent);border:1px solid rgba(0,255,136,.25)}
-.tag-rec{background:rgba(0,212,255,.12);color:var(--accent2);border:1px solid rgba(0,212,255,.25)}
+.tag-std{background:rgba(0,255,136,.12);color:var(--accent);border:1px solid rgba(0,255,136,.25)}
 .tag-full{background:rgba(255,107,53,.12);color:var(--orange);border:1px solid rgba(255,107,53,.25)}
-
-/* Button */
 .btn{width:100%;background:var(--accent);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:15px 24px;cursor:pointer;transition:all .2s;text-transform:uppercase}
 .btn:hover{background:#00ffaa;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,255,136,.3)}
 .btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none}
-
-/* Progress */
 .progress-card{display:none}.progress-card.visible{display:block;animation:fadeUp .4s ease}
 .progress-steps{display:flex;flex-direction:column;gap:12px}
 .step{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted);transition:color .3s}
@@ -70,8 +65,6 @@ input::placeholder{color:var(--muted)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
 .error-card{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.3);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:none;color:var(--red);font-size:13px}
 .error-card.visible{display:block;animation:fadeUp .4s ease}
-
-/* Results */
 #results{display:none}#results.visible{display:block;animation:fadeUp .5s ease}
 .repo-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
 .repo-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px}
@@ -83,30 +76,27 @@ input::placeholder{color:var(--muted)}
 .score-big{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .score-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
 .tier-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
-.scores-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
-@media(max-width:700px){.scores-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:440px){.scores-grid{grid-template-columns:1fr}}
-.score-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;animation:fadeUp .5s ease both;transition:border-color .2s,transform .2s}
+.scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:800px){.scores-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:500px){.scores-grid{grid-template-columns:1fr 1fr}}
+.score-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;animation:fadeUp .5s ease both;transition:border-color .2s,transform .2s}
 .score-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.sc-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;line-height:1.4}
-.sc-num{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1;margin-bottom:3px}
-.sc-tier{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.sc-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;line-height:1.4}
+.sc-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;margin-bottom:2px}
+.sc-tier{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px}
 .sc-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:8px}
 .sc-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
 .sc-fb{font-size:11px;color:var(--muted);line-height:1.6}
-.result-section-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.result-section-icon{font-size:18px}.result-section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}.result-section-sub{font-size:11px;color:var(--muted);margin-left:auto}
-.analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:600px){.analysis-grid{grid-template-columns:1fr}}
-.analysis-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px}
-.atitle{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
-.mini-score{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:10px}
+.issues-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+@media(max-width:600px){.issues-grid{grid-template-columns:1fr}}
+.issues-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
+.issues-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .issue-list{list-style:none}
-.issue-list li{font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.issue-list li{font-size:11px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border);line-height:1.5}
 .issue-list li:last-child{border-bottom:none}
-.issue-list li::before{content:'→ ';color:var(--red)}
-.issue-list.clean li::before{color:var(--accent);content:'✓ '}
+.issue-list li::before{content:'-> ';color:var(--red)}
+.issue-list.clean li::before{color:var(--accent);content:'ok '}
 .orig-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .orig-score-ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'Syne',sans-serif;flex-shrink:0}
 .orig-score-num{font-size:22px;font-weight:800;line-height:1}.orig-score-lbl{font-size:9px;letter-spacing:1px;opacity:.8}
@@ -114,7 +104,7 @@ input::placeholder{color:var(--muted)}
 .orig-flags{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
 @media(max-width:500px){.orig-flags{grid-template-columns:1fr}}
 .flag-section{font-size:11px}.flag-title{font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-.flag-item{padding:3px 0;color:var(--muted);line-height:1.5}.flag-item::before{content:'• '}
+.flag-item{padding:3px 0;color:var(--muted);line-height:1.5}.flag-item::before{content:'* '}
 .commit-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-style:italic}
 .sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
 @media(max-width:500px){.sw-grid{grid-template-columns:1fr}}
@@ -133,358 +123,163 @@ input::placeholder{color:var(--muted)}
 .verdict-text{font-size:13px;line-height:1.8;color:var(--muted);margin-bottom:14px}
 .tech-stack{display:flex;gap:8px;flex-wrap:wrap}
 .tech-tag{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent2);font-size:11px;font-weight:600;padding:4px 12px;border-radius:4px}
-.rubric-row{display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
-.rubric-row:last-child{border-bottom:none}
-.rrange{font-weight:700;width:36px}.rlabel{font-weight:600;width:110px}.rdesc{color:var(--muted);flex:1}
+.section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-hdr-icon{font-size:17px}.section-hdr-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}.section-hdr-sub{font-size:11px;color:var(--muted);margin-left:auto}
 .c-red{color:#ff4757}.c-orange{color:#ff6b35}.c-yellow{color:#ffd700}.c-green{color:#00ff88}.c-cyan{color:#00d4ff}
 .bar-red{background:#ff4757}.bar-orange{background:#ff6b35}.bar-yellow{background:#ffd700}.bar-green{background:#00ff88}.bar-cyan{background:linear-gradient(90deg,#00ff88,#00d4ff)}
 .tier-red{background:rgba(255,71,87,.15);color:#ff4757}.tier-orange{background:rgba(255,107,53,.15);color:#ff6b35}.tier-yellow{background:rgba(255,215,0,.15);color:#ffd700}.tier-green{background:rgba(0,255,136,.15);color:#00ff88}.tier-cyan{background:rgba(0,212,255,.15);color:#00d4ff}
 .footer{text-align:center;margin-top:48px;font-size:11px;color:var(--muted);letter-spacing:1px}
 @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.score-card:nth-child(1){animation-delay:.05s}.score-card:nth-child(2){animation-delay:.1s}.score-card:nth-child(3){animation-delay:.15s}.score-card:nth-child(4){animation-delay:.2s}.score-card:nth-child(5){animation-delay:.25s}
+.score-card:nth-child(1){animation-delay:.04s}.score-card:nth-child(2){animation-delay:.08s}.score-card:nth-child(3){animation-delay:.12s}.score-card:nth-child(4){animation-delay:.16s}.score-card:nth-child(5){animation-delay:.2s}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
 <div class="container">
-
   <div class="header">
-    <div class="badge">⚡ AI-Powered · Claude</div>
+    <div class="badge">AI-Powered Claude</div>
     <h1>Hackathon Code Judge</h1>
-    <p id="headerSub">Standard · Advanced · Full assessment modes</p>
+    <p id="headerSub">5-category assessment · Standard &amp; Full modes</p>
   </div>
-
-  <!-- Hackathon info banner (loaded from server config) -->
-  <div class="hackathon-banner" id="hackathonBanner" style="display:none">
+  <div class="hackathon-banner" id="hackathonBanner">
     <div class="hackathon-name" id="hackathonName"></div>
-    <div class="hackathon-edition" id="hackathonEdition"></div>
     <div class="hackathon-topic-label">Hackathon Topic</div>
     <div class="hackathon-topic-text" id="hackathonTopic"></div>
   </div>
-
-  <!-- Rubric -->
   <div class="card" style="animation:fadeUp .6s ease .1s both">
-    <div class="card-title">Scoring Rubric</div>
-    <div class="rubric-row"><span class="rrange c-red">0–4</span><span class="rlabel c-red">Non-Functional</span><span class="rdesc">Fails to demonstrate core concept.</span></div>
-    <div class="rubric-row"><span class="rrange c-orange">5–8</span><span class="rlabel c-orange">Basic</span><span class="rdesc">Functional but lacks key features or has significant bugs.</span></div>
-    <div class="rubric-row"><span class="rrange c-yellow">9–12</span><span class="rlabel c-yellow">Functional</span><span class="rdesc">Clear architecture, core features work, mostly stable.</span></div>
-    <div class="rubric-row"><span class="rrange c-green">13–16</span><span class="rlabel c-green">Robust</span><span class="rdesc">Reliable prototype, seamlessly integrates with ecosystem.</span></div>
-    <div class="rubric-row"><span class="rrange c-cyan">17–20</span><span class="rlabel c-cyan">Exceptional</span><span class="rdesc">Technically sound, fully working, feels native to target app.</span></div>
+    <div class="card-title">5 Scoring Categories — each 0 to 20</div>
+    <div class="cats-overview">
+      <div class="cat-chip"><div class="cat-chip-icon">🔧</div><div class="cat-chip-label">Prototype Quality</div><div class="cat-chip-score">0 - 20</div></div>
+      <div class="cat-chip"><div class="cat-chip-icon">🏗️</div><div class="cat-chip-label">Code Quality &amp; Arch.</div><div class="cat-chip-score">0 - 20</div></div>
+      <div class="cat-chip"><div class="cat-chip-icon">💡</div><div class="cat-chip-label">Innovation, Docs &amp; Topic</div><div class="cat-chip-score">0 - 20</div></div>
+      <div class="cat-chip"><div class="cat-chip-icon">🔒</div><div class="cat-chip-label">Security</div><div class="cat-chip-score">0 - 20</div></div>
+      <div class="cat-chip"><div class="cat-chip-icon">⚡</div><div class="cat-chip-label">Performance &amp; Maintainability</div><div class="cat-chip-score">0 - 20</div></div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Score Rubric</div>
+    <div class="rubric-row"><span class="rrange c-red">0-4</span><span class="rlabel c-red">Non-Functional</span><span class="rdesc">Fails to demonstrate core concept.</span></div>
+    <div class="rubric-row"><span class="rrange c-orange">5-8</span><span class="rlabel c-orange">Basic</span><span class="rdesc">Functional but lacks key features or has significant bugs.</span></div>
+    <div class="rubric-row"><span class="rrange c-yellow">9-12</span><span class="rlabel c-yellow">Functional</span><span class="rdesc">Clear architecture, core features work, mostly stable.</span></div>
+    <div class="rubric-row"><span class="rrange c-green">13-16</span><span class="rlabel c-green">Robust</span><span class="rdesc">Reliable prototype, seamlessly integrates with ecosystem.</span></div>
+    <div class="rubric-row"><span class="rrange c-cyan">17-20</span><span class="rlabel c-cyan">Exceptional</span><span class="rdesc">Technically sound, fully working, feels native to target app.</span></div>
   </div>
-
-  <!-- Evaluation form -->
   <div class="card" style="animation:fadeUp .6s ease .2s both">
     <div class="card-title">Evaluation Setup</div>
-
     <div class="input-group">
       <label>GitHub Repository URL *</label>
       <input type="text" id="repo_url" placeholder="https://github.com/owner/repo" />
     </div>
-
-    <div class="mode-label">Evaluation Mode</div>
+    <div class="mode-label-txt">Evaluation Mode</div>
     <div class="mode-grid">
       <div class="mode-card selected" id="mode-standard" onclick="selectMode('standard')">
         <div class="mode-icon">📋</div>
         <div class="mode-name">Standard</div>
-        <div class="mode-desc">4 core categories: Prototype, Code Quality, Innovation, Documentation</div>
-        <span class="mode-tag tag-fast">Fastest</span>
-      </div>
-      <div class="mode-card" id="mode-advanced" onclick="selectMode('advanced')">
-        <div class="mode-icon">🔬</div>
-        <div class="mode-name">Advanced</div>
-        <div class="mode-desc">Standard + Deep Code Analysis: Security, Performance, Maintainability</div>
-        <span class="mode-tag tag-rec">Recommended</span>
+        <div class="mode-includes">
+          <span>All 5 scoring categories</span>
+          <span>Security issue list</span>
+          <span>Performance issue list</span>
+          <span>Strengths &amp; weaknesses</span>
+          <span>Judge recommendation</span>
+        </div>
+        <span class="mode-tag tag-std">Recommended</span>
       </div>
       <div class="mode-card" id="mode-full" onclick="selectMode('full')">
         <div class="mode-icon">🕵️</div>
-        <div class="mode-name">Full</div>
-        <div class="mode-desc">Advanced + Cheat Detection, Commit Analysis, Originality Score, Disqualification Flag</div>
+        <div class="mode-name">Full + Cheat Detection</div>
+        <div class="mode-includes">
+          <span>Everything in Standard</span>
+          <span>Commit pattern analysis</span>
+          <span>Authenticity score 0-100</span>
+          <span>Red flag / green flag list</span>
+          <span>Disqualification flag</span>
+        </div>
         <span class="mode-tag tag-full">Most Thorough</span>
       </div>
     </div>
-
     <input type="hidden" id="api_key" value="" />
     <input type="hidden" id="github_token" value="" />
-
-    <button class="btn" id="analyzeBtn" onclick="analyze()">⚡ Run Standard Assessment</button>
+    <button class="btn" id="analyzeBtn" onclick="analyze()">Run Standard Assessment</button>
   </div>
-
-  <!-- Progress -->
   <div class="card progress-card" id="progressCard">
     <div class="progress-steps">
-      <div class="step" id="step1"><div class="step-icon">1</div><span>Fetching repository metadata…</span></div>
-      <div class="step" id="step2"><div class="step-icon">2</div><span id="step2txt">Fetching commit history…</span></div>
-      <div class="step" id="step3"><div class="step-icon">3</div><span id="step3txt">Collecting source files…</span></div>
-      <div class="step" id="step4"><div class="step-icon">4</div><span id="step4txt">Sending to Claude…</span></div>
-      <div class="step" id="step5"><div class="step-icon">5</div><span>Generating report…</span></div>
+      <div class="step" id="step1"><div class="step-icon">1</div><span>Fetching repository metadata...</span></div>
+      <div class="step" id="step2"><div class="step-icon">2</div><span id="step2txt">Fetching commit history...</span></div>
+      <div class="step" id="step3"><div class="step-icon">3</div><span id="step3txt">Collecting source files...</span></div>
+      <div class="step" id="step4"><div class="step-icon">4</div><span id="step4txt">Sending to Claude...</span></div>
+      <div class="step" id="step5"><div class="step-icon">5</div><span>Generating report...</span></div>
     </div>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px">
       <span id="heartbeatMsg" style="font-size:11px;color:var(--muted);font-style:italic"></span>
-      <button id="cancelBtn" onclick="cancelAnalysis()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;flex-shrink:0">✕ Cancel</button>
+      <button id="cancelBtn" onclick="cancelAnalysis()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 14px;border-radius:6px;cursor:pointer;flex-shrink:0">X Cancel</button>
     </div>
   </div>
-
   <div class="error-card" id="errorCard"></div>
-
-  <!-- Results -->
   <div id="results">
     <div class="card" id="repoHeader"></div>
     <div class="scores-grid" id="scoresGrid"></div>
-    <div class="card" id="codeAnalysisCard" style="display:none">
-      <div class="result-section-header">
-        <span class="result-section-icon">🔍</span>
-        <span class="result-section-title">Deep Code Analysis</span>
-        <span class="result-section-sub">Security · Performance · Maintainability</span>
-      </div>
-      <div class="analysis-grid" id="analysisGrid"></div>
-    </div>
+    <div class="issues-grid" id="issuesGrid"></div>
     <div id="originalityCard"></div>
     <div class="sw-grid" id="swGrid"></div>
     <div class="card" id="verdictCard"></div>
   </div>
-
   <div class="footer">Hackathon Code Judge · Powered by Claude Sonnet · GitHub API</div>
 </div>
-
 <script>
-let selectedMode = 'standard';
-let activeReader = null;  // track current stream so we can cancel it
-
-function cancelAnalysis() {
-  if (activeReader) {
-    activeReader.cancel();
-    activeReader = null;
-  }
-  document.getElementById('progressCard').className = 'card progress-card';
-  document.getElementById('analyzeBtn').disabled = false;
-  document.getElementById('heartbeatMsg').textContent = '';
-}
-
-// ── Load hackathon config from server on page load ────────────────────────────
-async function loadConfig() {
-  try {
-    const r = await fetch('/config');
-    const cfg = await r.json();
-    if (cfg.hackathon_name) {
-      document.getElementById('hackathonBanner').style.display = 'block';
-      document.getElementById('hackathonName').textContent = cfg.hackathon_name + (cfg.hackathon_edition ? ' — ' + cfg.hackathon_edition : '');
-      document.getElementById('hackathonEdition').textContent = cfg.hackathon_edition ? 'Edition ' + cfg.hackathon_edition : '';
-      if (cfg.hackathon_topic) {
-        document.getElementById('hackathonTopic').textContent = cfg.hackathon_topic;
-      } else {
-        document.getElementById('hackathonTopic').innerHTML = '<span class="no-topic">No topic defined in hackathon.json</span>';
-      }
-      document.getElementById('headerSub').textContent = cfg.hackathon_name + ' · Judge Panel';
-      document.title = cfg.hackathon_name + ' · Judge';
-    }
-  } catch(e) {}
-}
-window.addEventListener('load', loadConfig);
-
-// ── Mode selection ─────────────────────────────────────────────────────────────
-function selectMode(mode) {
-  selectedMode = mode;
-  ['standard','advanced','full'].forEach(m => {
-    document.getElementById('mode-' + m).classList.toggle('selected', m === mode);
-  });
-  const labels = {
-    standard: '⚡ Run Standard Assessment',
-    advanced: '🔬 Run Advanced Assessment',
-    full:     '🕵️ Run Full Assessment',
-  };
-  document.getElementById('analyzeBtn').textContent = labels[mode];
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
+let selectedMode='standard',activeReader=null;
+async function loadConfig(){try{const cfg=await fetch('/config').then(r=>r.json());if(cfg.hackathon_name){document.getElementById('hackathonBanner').style.display='block';document.getElementById('hackathonName').textContent=cfg.hackathon_name+(cfg.hackathon_edition?' — Edition '+cfg.hackathon_edition:'');document.getElementById('hackathonTopic').textContent=cfg.hackathon_topic||'No topic defined in hackathon.json';document.getElementById('headerSub').textContent=cfg.hackathon_name+' · Judge Panel';document.title=cfg.hackathon_name+' · Judge';}}catch(e){}}
+window.addEventListener('load',loadConfig);
+function selectMode(mode){selectedMode=mode;document.getElementById('mode-standard').classList.toggle('selected',mode==='standard');document.getElementById('mode-full').classList.toggle('selected',mode==='full');document.getElementById('analyzeBtn').textContent=mode==='standard'?'Run Standard Assessment':'Run Full + Cheat Detection';}
+function cancelAnalysis(){if(activeReader){activeReader.cancel();activeReader=null;}document.getElementById('progressCard').className='card progress-card';document.getElementById('analyzeBtn').disabled=false;document.getElementById('heartbeatMsg').textContent='';}
 function sc(s){if(s<=4)return'red';if(s<=8)return'orange';if(s<=12)return'yellow';if(s<=16)return'green';return'cyan'}
-function setStep(n,msg){
-  for(let i=1;i<=5;i++){
-    const el=document.getElementById('step'+i);
-    el.className='step'+(i<n?' done':i===n?' active':'');
-    el.querySelector('.step-icon').textContent=i<n?'✓':i;
-  }
-  if(msg){const t=document.getElementById('step'+n+'txt');if(t)t.textContent=msg;}
-}
-function showError(msg){
-  document.getElementById('errorCard').textContent='⚠ '+msg;
-  document.getElementById('errorCard').className='error-card visible';
-  document.getElementById('progressCard').className='card progress-card';
-  document.getElementById('analyzeBtn').disabled=false;
-}
-
-// ── Render results ─────────────────────────────────────────────────────────────
-function renderResults(r) {
+function setStep(n,msg){for(let i=1;i<=5;i++){const el=document.getElementById('step'+i);el.className='step'+(i<n?' done':i===n?' active':'');el.querySelector('.step-icon').textContent=i<n?'v':i;}if(msg){const t=document.getElementById('step'+n+'txt');if(t)t.textContent=msg;}}
+function showError(msg){document.getElementById('errorCard').textContent='! '+msg;document.getElementById('errorCard').className='error-card visible';document.getElementById('progressCard').className='card progress-card';document.getElementById('analyzeBtn').disabled=false;}
+function renderResults(r){
   const ri=r.repo_info||{},scores=r.scores||{},fb=r.category_feedback||{},ti=r.tier_info||{},overall=r.overall_score||0,oc=sc(Math.round(overall));
-
-  // Repo header
-  document.getElementById('repoHeader').innerHTML=`<div class="repo-header">
-    <div>
-      <div class="repo-name">${ri.name||'Repository'}</div>
-      <div class="repo-desc">${ri.description||'No description'}</div>
-      <div class="repo-tags">
-        ${ri.language?'<span class="rtag lang">'+ri.language+'</span>':''}
-        <span class="rtag">⭐ ${ri.stars||0}</span>
-        <span class="rtag">📁 ${ri.file_count||0} files</span>
-        <span class="rtag">📝 ${ri.commit_count||0} commits</span>
-        ${ri.created_at?'<span class="rtag">📅 '+ri.created_at.substring(0,10)+'</span>':''}
-        ${ri.is_fork?'<span class="rtag warn">🍴 Fork</span>':'<span class="rtag ok">✓ Original</span>'}
-        <span class="rtag"><a href="${ri.url||'#'}" target="_blank" style="color:inherit;text-decoration:none">🔗 View Repo</a></span>
-      </div>
-    </div>
-    <div class="overall-score">
-      <div class="score-big c-${oc}">${overall}</div>
-      <div class="score-label">/ 20 avg</div>
-      <div class="tier-badge tier-${oc}">${r.overall_tier?.label||''}</div>
-    </div>
-  </div>`;
-
-  // Score cards
-  const cats=[
-    {key:'prototype_quality',label:'Prototype Quality',icon:'🔧'},
-    {key:'code_quality',label:'Code Quality & Arch.',icon:'🏗️'},
-    {key:'innovation',label:'Innovation',icon:'💡'},
-    {key:'documentation',label:'Documentation',icon:'📚'},
-    {key:'topic_alignment',label:'Topic Alignment',icon:'🎯'},
-  ];
-  document.getElementById('scoresGrid').innerHTML=cats.map((c,i)=>{
-    const s=scores[c.key];if(s==null)return'';
-    const col=sc(s),pct=(s/20*100).toFixed(1),tier=ti[c.key]||{};
-    return`<div class="score-card" style="animation-delay:${i*.05}s">
-      <div class="sc-header"><div class="sc-title">${c.label}</div><div>${c.icon}</div></div>
-      <div class="sc-num c-${col}">${s}<span style="font-size:13px;color:var(--muted)">/20</span></div>
-      <div class="sc-tier c-${col}">${tier.label||''}</div>
-      <div class="sc-bar"><div class="sc-bar-fill bar-${col}" style="width:0%" data-w="${pct}%"></div></div>
-      <div class="sc-fb">${fb[c.key]||''}</div>
-    </div>`;
-  }).join('');
-  setTimeout(()=>{document.querySelectorAll('.sc-bar-fill').forEach(e=>{e.style.width=e.dataset.w})},100);
-
-  // Deep Code Analysis
-  const ca=r.code_analysis;
-  if(ca){
-    document.getElementById('codeAnalysisCard').style.display='block';
-    const sC=sc((ca.security_score||0)*2),pC=sc((ca.performance_score||0)*2),mC=sc((ca.maintainability_score||0)*2);
-    const issHtml=(arr,cls)=>arr&&arr.length?`<ul class="issue-list ${cls}">${arr.map(i=>`<li>${i}</li>`).join('')}</ul>`:`<ul class="issue-list clean"><li>No issues found</li></ul>`;
-    document.getElementById('analysisGrid').innerHTML=`
-      <div class="analysis-card"><div class="atitle">🔒 Security</div><div class="mini-score c-${sC}">${ca.security_score??'?'}<span style="font-size:13px;color:var(--muted)">/10</span></div>${issHtml(ca.security_issues,'')}</div>
-      <div class="analysis-card"><div class="atitle">⚡ Performance</div><div class="mini-score c-${pC}">${ca.performance_score??'?'}<span style="font-size:13px;color:var(--muted)">/10</span></div>${issHtml(ca.performance_issues,'')}</div>
-      <div class="analysis-card"><div class="atitle">🧹 Maintainability</div><div class="mini-score c-${mC}">${ca.maintainability_score??'?'}<span style="font-size:13px;color:var(--muted)">/10</span></div>${issHtml(ca.complexity_issues,'')}</div>`;
-  } else {
-    document.getElementById('codeAnalysisCard').style.display='none';
-  }
-
-  // Cheat Detection
+  document.getElementById('repoHeader').innerHTML='<div class="repo-header"><div><div class="repo-name">'+( ri.name||'Repository')+'</div><div class="repo-desc">'+(ri.description||'No description')+'</div><div class="repo-tags">'+(ri.language?'<span class="rtag lang">'+ri.language+'</span>':'')+'<span class="rtag">Stars '+( ri.stars||0)+'</span><span class="rtag">Files '+(ri.file_count||0)+'</span><span class="rtag">Commits '+(ri.commit_count||0)+'</span>'+(ri.created_at?'<span class="rtag">'+ri.created_at.substring(0,10)+'</span>':'')+(ri.is_fork?'<span class="rtag warn">Fork</span>':'<span class="rtag ok">Original</span>')+'<span class="rtag"><a href="'+(ri.url||'#')+'" target="_blank" style="color:inherit;text-decoration:none">View Repo</a></span></div></div><div class="overall-score"><div class="score-big c-'+oc+'">'+overall+'</div><div class="score-label">/ 20 avg</div><div class="tier-badge tier-'+oc+'">'+(r.overall_tier&&r.overall_tier.label||'')+'</div></div></div>';
+  const cats=[{key:'prototype_quality',label:'Prototype Quality',icon:'🔧'},{key:'code_quality',label:'Code Quality',icon:'🏗️'},{key:'innovation_doc_topic',label:'Innovation, Docs & Topic',icon:'💡'},{key:'security',label:'Security',icon:'🔒'},{key:'performance_maintainability',label:'Performance & Maint.',icon:'⚡'}];
+  document.getElementById('scoresGrid').innerHTML=cats.map((c,i)=>{const s=scores[c.key];if(s==null)return'';const col=sc(s),pct=(s/20*100).toFixed(1),tier=ti[c.key]||{};return'<div class="score-card" style="animation-delay:'+(i*.04)+'s"><div class="sc-header"><div class="sc-title">'+c.label+'</div><div style="font-size:15px">'+c.icon+'</div></div><div class="sc-num c-'+col+'">'+s+'<span style="font-size:12px;color:var(--muted)">/20</span></div><div class="sc-tier c-'+col+'">'+(tier.label||'')+'</div><div class="sc-bar"><div class="sc-bar-fill bar-'+col+'" style="width:0%" data-w="'+pct+'%"></div></div><div class="sc-fb">'+(fb[c.key]||'')+'</div></div>';}).join('');
+  setTimeout(()=>{document.querySelectorAll('.sc-bar-fill').forEach(e=>{e.style.width=e.dataset.w;})},100);
+  const si=r.security_issues||[],pi=r.performance_issues||[];
+  const iH=(arr,cls)=>arr.length?'<ul class="issue-list '+cls+'">'+arr.map(i=>'<li>'+i+'</li>').join('')+'</ul>':'<ul class="issue-list clean"><li>No issues detected</li></ul>';
+  document.getElementById('issuesGrid').innerHTML='<div class="issues-panel"><div class="issues-title" style="color:var(--red)"><span>🔒</span> Security Issues</div>'+iH(si,'')+'</div><div class="issues-panel"><div class="issues-title" style="color:var(--warn)"><span>⚡</span> Performance & Maintainability Issues</div>'+iH(pi,'')+'</div>';
   const og=r.originality;
-  if(og){
-    const auth=og.authenticity_score??50;
-    const vm={
-      genuine:{lbl:'✅ GENUINE',bg:'rgba(0,255,136,.08)',bd:'rgba(0,255,136,.3)',col:'#00ff88'},
-      suspicious:{lbl:'⚠️ SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'},
-      likely_prebuilt:{lbl:'🚨 LIKELY PRE-BUILT',bg:'rgba(255,107,53,.08)',bd:'rgba(255,107,53,.3)',col:'#ff6b35'},
-      plagiarized:{lbl:'❌ PLAGIARIZED',bg:'rgba(255,71,87,.08)',bd:'rgba(255,71,87,.3)',col:'#ff4757'},
-    }[og.verdict]||{lbl:'⚠️ SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'};
-    const rf=(og.red_flags||[]).map(f=>`<div class="flag-item">${f}</div>`).join('')||`<div class="flag-item" style="color:var(--accent)">No red flags detected</div>`;
-    const gf=(og.green_flags||[]).map(f=>`<div class="flag-item">${f}</div>`).join('')||`<div class="flag-item">None detected</div>`;
-    document.getElementById('originalityCard').innerHTML=`<div class="card" style="border-color:${vm.bd};background:${vm.bg};margin-bottom:24px">
-      <div class="result-section-header" style="border-bottom-color:${vm.bd}">
-        <span class="result-section-icon">🕵️</span>
-        <span class="result-section-title" style="color:${vm.col}">Cheat Detection</span>
-        <span class="result-section-sub">Authenticity ${auth}/100</span>
-      </div>
-      <div class="orig-header">
-        <div>
-          <div class="verdict-pill" style="background:rgba(0,0,0,.25);color:${vm.col};border:1px solid ${vm.bd}">${vm.lbl}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:520px">${og.explanation||''}</div>
-        </div>
-        <div class="orig-score-ring" style="background:rgba(0,0,0,.2);border:2px solid ${vm.bd}">
-          <div class="orig-score-num" style="color:${vm.col}">${auth}</div>
-          <div class="orig-score-lbl" style="color:${vm.col}">/ 100</div>
-        </div>
-      </div>
-      <div class="orig-flags">
-        <div class="flag-section"><div class="flag-title" style="color:var(--red)">🚩 Red Flags</div>${rf}</div>
-        <div class="flag-section"><div class="flag-title" style="color:var(--accent)">✅ Green Flags</div>${gf}</div>
-      </div>
-      <div class="commit-note">💬 ${og.commit_pattern_analysis||''}</div>
-    </div>`;
-  } else {
-    document.getElementById('originalityCard').innerHTML='';
-  }
-
-  // Strengths / Weaknesses
-  document.getElementById('swGrid').innerHTML=`
-    <div class="sw-card"><div class="sw-title green">✅ Strengths</div>${(r.strengths||[]).map(s=>`<div class="sw-item"><div class="sw-dot" style="background:var(--accent)"></div><span>${s}</span></div>`).join('')}</div>
-    <div class="sw-card"><div class="sw-title amber">⚠ Areas to Improve</div>${(r.weaknesses||[]).map(w=>`<div class="sw-item"><div class="sw-dot" style="background:var(--warn)"></div><span>${w}</span></div>`).join('')}</div>`;
-
-  // Verdict
-  const rec=r.judge_recommendation||'borderline';
-  const rm={advance:['✅ ADVANCE','rec-advance'],borderline:['⚡ BORDERLINE','rec-borderline'],reject:['❌ REJECT','rec-reject']};
-  const [rl,rc]=rm[rec]||rm.borderline;
-  const tech=(r.tech_stack_detected||[]).map(t=>`<span class="tech-tag">${t}</span>`).join('');
-  const dqBanner=r.disqualify_recommendation?`<div class="dq-banner">🚫 DISQUALIFICATION RECOMMENDED — ${r.disqualify_reason||''}</div>`:'';
-  document.getElementById('verdictCard').innerHTML=`
-    <div class="verdict-header"><div class="verdict-title">// Judge Verdict</div><div class="rec-badge ${rc}">${rl}</div></div>
-    ${dqBanner}
-    <div class="verdict-text">${r.overall_verdict||''}</div>
-    ${tech?'<div style="margin-bottom:8px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Tech Stack</div><div class="tech-stack">'+tech+'</div>':''}`;
-
+  if(og){const auth=og.authenticity_score||50;const vm={genuine:{lbl:'GENUINE',bg:'rgba(0,255,136,.08)',bd:'rgba(0,255,136,.3)',col:'#00ff88'},suspicious:{lbl:'SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'},likely_prebuilt:{lbl:'LIKELY PRE-BUILT',bg:'rgba(255,107,53,.08)',bd:'rgba(255,107,53,.3)',col:'#ff6b35'},plagiarized:{lbl:'PLAGIARIZED',bg:'rgba(255,71,87,.08)',bd:'rgba(255,71,87,.3)',col:'#ff4757'}}[og.verdict]||{lbl:'SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'};const rf=(og.red_flags||[]).map(f=>'<div class="flag-item">'+f+'</div>').join('')||'<div class="flag-item" style="color:var(--accent)">None detected</div>';const gf=(og.green_flags||[]).map(f=>'<div class="flag-item">'+f+'</div>').join('')||'<div class="flag-item">None detected</div>';document.getElementById('originalityCard').innerHTML='<div class="card" style="border-color:'+vm.bd+';background:'+vm.bg+';margin-bottom:24px"><div class="section-hdr" style="border-bottom-color:'+vm.bd+'"><span class="section-hdr-icon">🕵️</span><span class="section-hdr-title" style="color:'+vm.col+'">Cheat Detection</span><span class="section-hdr-sub">Authenticity '+auth+'/100</span></div><div class="orig-header"><div><div class="verdict-pill" style="background:rgba(0,0,0,.25);color:'+vm.col+';border:1px solid '+vm.bd+'">'+vm.lbl+'</div><div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:520px">'+(og.explanation||'')+'</div></div><div class="orig-score-ring" style="background:rgba(0,0,0,.2);border:2px solid '+vm.bd+'"><div class="orig-score-num" style="color:'+vm.col+'">'+auth+'</div><div class="orig-score-lbl" style="color:'+vm.col+'">/100</div></div></div><div class="orig-flags"><div class="flag-section"><div class="flag-title" style="color:var(--red)">Red Flags</div>'+rf+'</div><div class="flag-section"><div class="flag-title" style="color:var(--accent)">Green Flags</div>'+gf+'</div></div><div class="commit-note">'+(og.commit_pattern_analysis||'')+'</div></div>';}
+  else{document.getElementById('originalityCard').innerHTML='';}
+  document.getElementById('swGrid').innerHTML='<div class="sw-card"><div class="sw-title green">Strengths</div>'+(r.strengths||[]).map(s=>'<div class="sw-item"><div class="sw-dot" style="background:var(--accent)"></div><span>'+s+'</span></div>').join('')+'</div><div class="sw-card"><div class="sw-title amber">Areas to Improve</div>'+(r.weaknesses||[]).map(w=>'<div class="sw-item"><div class="sw-dot" style="background:var(--warn)"></div><span>'+w+'</span></div>').join('')+'</div>';
+  const rec=r.judge_recommendation||'borderline',rm={advance:['ADVANCE','rec-advance'],borderline:['BORDERLINE','rec-borderline'],reject:['REJECT','rec-reject']},[rl,rc]=rm[rec]||rm.borderline;
+  const tech=(r.tech_stack_detected||[]).map(t=>'<span class="tech-tag">'+t+'</span>').join('');
+  const dqB=r.disqualify_recommendation?'<div class="dq-banner">DISQUALIFICATION RECOMMENDED — '+(r.disqualify_reason||'')+'</div>':'';
+  document.getElementById('verdictCard').innerHTML='<div class="verdict-header"><div class="verdict-title">Judge Verdict</div><div class="rec-badge '+rc+'">'+rl+'</div></div>'+dqB+'<div class="verdict-text">'+(r.overall_verdict||'')+'</div>'+(tech?'<div style="margin-bottom:8px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Tech Stack</div><div class="tech-stack">'+tech+'</div>':'');
   document.getElementById('results').className='visible';
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-// ── Analyze ────────────────────────────────────────────────────────────────────
-async function analyze() {
-  const repoUrl = document.getElementById('repo_url').value.trim();
-  if (!repoUrl) { alert('Please enter a GitHub repository URL'); return; }
-
+async function analyze(){
+  const repoUrl=document.getElementById('repo_url').value.trim();
+  if(!repoUrl){alert('Please enter a GitHub repository URL');return;}
   document.getElementById('errorCard').className='error-card';
   document.getElementById('results').className='';
   document.getElementById('progressCard').className='card progress-card visible';
   document.getElementById('analyzeBtn').disabled=true;
-  document.getElementById('codeAnalysisCard').style.display='none';
   document.getElementById('originalityCard').innerHTML='';
+  document.getElementById('heartbeatMsg').textContent='';
   setStep(1);
-
-  try {
-    const resp = await fetch('/analyze', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({repo_url: repoUrl, mode: selectedMode, api_key: '', github_token: '', max_files: 20}),
-    });
-    const reader = resp.body.getReader();
-    activeReader = reader;
-    const dec = new TextDecoder();
-    let buf = '';
-    while(true) {
-      const {done, value} = await reader.read();
-      if(done) break;
-      buf += dec.decode(value, {stream:true});
-      const lines = buf.split('\n'); buf = lines.pop();
-      for(const line of lines) {
-        if(!line.startsWith('data: ')) continue;
-        const d = JSON.parse(line.slice(6));
-        if(d.error) { showError(d.error); return; }
-        if(d.step==='fetch_meta')    setStep(1);
-        if(d.step==='fetch_commits') setStep(2, d.msg);
-        if(d.step==='fetch_files')   setStep(3);
-        if(d.step==='analyzing')     { setStep(4, d.msg); if(d.file_count) document.getElementById('step3txt').textContent=d.file_count+' files collected'; }
-        if(d.step==='heartbeat')    { document.getElementById('heartbeatMsg').textContent = '⏳ ' + (d.msg||'Claude is thinking...'); }
-        if(d.step==='done') {
-          setStep(5);
-          setTimeout(()=>{
-            document.getElementById('progressCard').className='card progress-card';
-            document.getElementById('analyzeBtn').disabled=false;
-            activeReader = null;
-            renderResults(d.result);
-          }, 400);
-        }
+  try{
+    const resp=await fetch('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repo_url:repoUrl,mode:selectedMode,api_key:'',github_token:'',max_files:20})});
+    const reader=resp.body.getReader();activeReader=reader;const dec=new TextDecoder();let buf='';
+    while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){if(!line.startsWith('data: '))continue;const d=JSON.parse(line.slice(6));
+        if(d.error){showError(d.error);return;}
+        if(d.step==='fetch_meta')setStep(1);
+        if(d.step==='fetch_commits')setStep(2,d.msg);
+        if(d.step==='fetch_files')setStep(3);
+        if(d.step==='analyzing'){setStep(4,d.msg);if(d.file_count)document.getElementById('step3txt').textContent=d.file_count+' files collected';}
+        if(d.step==='heartbeat')document.getElementById('heartbeatMsg').textContent='Thinking: '+(d.msg||'Claude is working...');
+        if(d.step==='done'){setStep(5);activeReader=null;setTimeout(()=>{document.getElementById('progressCard').className='card progress-card';document.getElementById('analyzeBtn').disabled=false;document.getElementById('heartbeatMsg').textContent='';renderResults(d.result);},400);}
       }
     }
-  } catch(e) { showError('Network error: '+e.message); }
+  }catch(e){showError('Network error: '+e.message);}
 }
-
-document.getElementById('repo_url').addEventListener('keydown', e=>{ if(e.key==='Enter') analyze(); });
+document.getElementById('repo_url').addEventListener('keydown',e=>{if(e.key==='Enter')analyze();});
 </script>
 </body>
 </html>
