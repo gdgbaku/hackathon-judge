@@ -428,15 +428,28 @@ def analyze():
             files_text = "\n\n".join("### " + p + "\n```\n" + c + "\n```" for p, c in files.items())
             prompt = build_prompt(repo_info, files_text, repo_url, commit_history, mode)
 
+            # Use streaming so Railway/proxies don't time out on long Claude calls.
+            # Heartbeat pings are sent every ~5s to keep the connection alive.
             client = anthropic.Anthropic(api_key=api_key)
-            message = client.messages.create(
+            raw_chunks = []
+            import time
+            last_ping = time.time()
+
+            with client.messages.stream(
                 model="claude-sonnet-4-20250514",
                 max_tokens=4000,
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": prompt}],
-            )
+            ) as stream:
+                for text_chunk in stream.text_stream:
+                    raw_chunks.append(text_chunk)
+                    # Send a heartbeat ping every 5 s to keep connection alive
+                    now = time.time()
+                    if now - last_ping >= 5:
+                        yield "data: " + json.dumps({"step": "heartbeat", "msg": "Claude is thinking…"}) + "\n\n"
+                        last_ping = now
 
-            raw = message.content[0].text.strip()
+            raw = "".join(raw_chunks).strip()
             if raw.startswith("```json"): raw = raw[7:]
             elif raw.startswith("```"):   raw = raw[3:]
             if raw.endswith("```"):       raw = raw[:-3]

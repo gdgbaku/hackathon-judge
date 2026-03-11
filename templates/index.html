@@ -219,6 +219,10 @@ input::placeholder{color:var(--muted)}
       <div class="step" id="step4"><div class="step-icon">4</div><span id="step4txt">Sending to Claude…</span></div>
       <div class="step" id="step5"><div class="step-icon">5</div><span>Generating report…</span></div>
     </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span id="heartbeatMsg" style="font-size:11px;color:var(--muted);font-style:italic"></span>
+      <button id="cancelBtn" onclick="cancelAnalysis()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;flex-shrink:0">✕ Cancel</button>
+    </div>
   </div>
 
   <div class="error-card" id="errorCard"></div>
@@ -245,6 +249,17 @@ input::placeholder{color:var(--muted)}
 
 <script>
 let selectedMode = 'standard';
+let activeReader = null;  // track current stream so we can cancel it
+
+function cancelAnalysis() {
+  if (activeReader) {
+    activeReader.cancel();
+    activeReader = null;
+  }
+  document.getElementById('progressCard').className = 'card progress-card';
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('heartbeatMsg').textContent = '';
+}
 
 // ── Load hackathon config from server on page load ────────────────────────────
 async function loadConfig() {
@@ -437,7 +452,9 @@ async function analyze() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({repo_url: repoUrl, mode: selectedMode, api_key: '', github_token: '', max_files: 20}),
     });
-    const reader = resp.body.getReader(), dec = new TextDecoder();
+    const reader = resp.body.getReader();
+    activeReader = reader;
+    const dec = new TextDecoder();
     let buf = '';
     while(true) {
       const {done, value} = await reader.read();
@@ -452,11 +469,13 @@ async function analyze() {
         if(d.step==='fetch_commits') setStep(2, d.msg);
         if(d.step==='fetch_files')   setStep(3);
         if(d.step==='analyzing')     { setStep(4, d.msg); if(d.file_count) document.getElementById('step3txt').textContent=d.file_count+' files collected'; }
+        if(d.step==='heartbeat')    { document.getElementById('heartbeatMsg').textContent = '⏳ ' + (d.msg||'Claude is thinking...'); }
         if(d.step==='done') {
           setStep(5);
           setTimeout(()=>{
             document.getElementById('progressCard').className='card progress-card';
             document.getElementById('analyzeBtn').disabled=false;
+            activeReader = null;
             renderResults(d.result);
           }, 400);
         }
