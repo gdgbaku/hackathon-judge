@@ -51,17 +51,39 @@ HACKATHON = load_hackathon_config()
 SKIP_EXTENSIONS = {
     ".png",".jpg",".jpeg",".gif",".svg",".ico",".webp",".bmp",
     ".mp4",".mp3",".wav",".zip",".tar",".gz",".lock",".pdf",
-    ".ttf",".woff",".woff2",".eot",".bin",".exe",".dll",
+    ".ttf",".woff",".woff2",".eot",".bin",".exe",".dll",".map",
+    ".min.js",".min.css",".d.ts",
 }
 SKIP_DIRS = {
     "node_modules",".git","vendor","dist","build","__pycache__",
-    ".next",".nuxt","coverage",".venv","venv","env",
+    ".next",".nuxt","coverage",".venv","venv","env","migrations",
+    "static","public","assets","images","fonts","test","tests",
+    "__tests__","spec","specs","fixtures","mocks","stubs",
 }
-PRIORITY_FILES = {
-    "readme","readme.md","readme.txt","main.py","app.py","index.js",
-    "index.ts","app.js","app.ts","server.py","server.js","main.go",
-    "package.json","requirements.txt","pyproject.toml","dockerfile",
+
+# Priority tiers — higher tier = fetched first, given more token budget
+FILE_PRIORITY = {
+    # Tier 1 — core entrypoints & config (always include, full content)
+    1: {"readme.md","readme.txt","readme","main.py","app.py","server.py",
+        "index.js","index.ts","app.js","app.ts","server.js","server.ts",
+        "main.go","main.rs","main.java","package.json","requirements.txt",
+        "pyproject.toml","go.mod","cargo.toml","dockerfile","docker-compose.yml",
+        "docker-compose.yaml",".env.example","config.py","settings.py","config.js",
+        "config.ts","next.config.js","vite.config.js","vite.config.ts"},
+    # Tier 2 — routers, models, core logic
+    2: {"routes.py","models.py","schema.py","schemas.py","views.py",
+        "controllers.py","handlers.py","middleware.py","auth.py","db.py",
+        "database.py","router.js","router.ts","routes.js","routes.ts",
+        "models.js","models.ts","api.js","api.ts","store.js","store.ts"},
 }
+
+# Max characters to send per file depending on tier
+CHAR_BUDGET = {
+    1: 6000,   # entrypoints — generous
+    2: 3000,   # supporting files — moderate
+    3: 1500,   # everything else — just enough to detect patterns
+}
+TOTAL_CHAR_LIMIT = 80_000   # ~20k tokens — safe Claude context budget for analysis
 SCORE_RUBRIC = [
     (0,  4,  "Non-Functional", "Prototype is non-functional or severely unstable."),
     (5,  8,  "Basic",          "Functional but lacks key features or has significant bugs."),
@@ -95,23 +117,52 @@ def github_api(path: str, token: Optional[str] = None) -> Union[dict, list]:
     return resp.json()
 
 
-def fetch_file_content(url: str, token: Optional[str] = None) -> Optional[str]:
+def fetch_file_content(url: str, token: Optional[str] = None, char_limit: int = 6000) -> Optional[str]:
     headers = {}
     if token:
         headers["Authorization"] = "token " + token
     try:
         resp = req.get(url, headers=headers, timeout=10)
         resp.raise_for_status()
-        return resp.text[:8000]
+        text = resp.text
+        if len(text) > char_limit:
+            # Keep first 80% and last 20% — head has imports/config, tail has main logic
+            head = int(char_limit * 0.8)
+            tail = char_limit - head
+            text = text[:head] + "\n\n... [truncated " + str(len(resp.text) - char_limit) + " chars] ...\n\n" + text[-tail:]
+        return text
     except Exception:
         return None
 
 
-def collect_repo_files(owner: str, repo: str, token: Optional[str], max_files: int = 20) -> dict:
-    collected, priority = {}, {}
+def get_file_tier(name: str, path: str) -> int:
+    name_lower = name.lower()
+    path_lower = path.lower()
+    if name_lower in FILE_PRIORITY[1]:
+        return 1
+    if name_lower in FILE_PRIORITY[2]:
+        return 2
+    # Tier 1 by path pattern — entrypoint-like files anywhere
+    if any(part in path_lower for part in ["/main.", "/app.", "/server.", "/index.", "/api/"]):
+        return 1
+    return 3
 
-    def walk(path: str = ""):
-        if len(collected) + len(priority) >= max_files * 2:
+
+def collect_repo_files(owner: str, repo: str, token: Optional[str]) -> tuple[dict, dict]:
+    """
+    Returns (files_dict, stats_dict).
+    Smart collection: two-pass approach.
+      Pass 1 — crawl entire tree to build a manifest (no file downloads yet).
+      Pass 2 — download files in priority order, stop when char budget is reached.
+    This prevents wasting GitHub API calls on low-value files in big repos.
+    """
+    # ── Pass 1: Crawl tree, collect manifest ──────────────────────────────────
+    manifest = []   # list of (tier, size, name, path, download_url)
+    dirs_crawled = 0
+
+    def walk(path: str = "", depth: int = 0):
+        nonlocal dirs_crawled
+        if dirs_crawled > 120:   # hard cap on API calls during crawl
             return
         try:
             items = github_api("/repos/" + owner + "/" + repo + "/contents/" + path.lstrip("/"), token)
@@ -119,32 +170,57 @@ def collect_repo_files(owner: str, repo: str, token: Optional[str], max_files: i
             return
         if isinstance(items, dict):
             items = [items]
+        dirs_crawled += 1
         for item in items:
-            if len(collected) + len(priority) >= max_files * 2:
-                break
             name  = item.get("name", "")
             ipath = item.get("path", "")
+            size  = item.get("size", 0)
             if item.get("type") == "dir":
-                if name.lower() not in SKIP_DIRS:
-                    walk(ipath)
+                if name.lower() not in SKIP_DIRS and depth < 4:
+                    walk(ipath, depth + 1)
             elif item.get("type") == "file":
-                if Path(name).suffix.lower() in SKIP_EXTENSIONS:
+                ext = Path(name).suffix.lower()
+                # Skip known-bad extensions, minified files, huge files
+                if ext in SKIP_EXTENSIONS:
                     continue
-                if item.get("size", 0) > 150_000:
+                if name.endswith(".min.js") or name.endswith(".min.css"):
                     continue
-                content = fetch_file_content(item.get("download_url", ""), token)
-                if content is None:
+                if size > 200_000:
                     continue
-                if name.lower() in PRIORITY_FILES or ipath.lower() in PRIORITY_FILES:
-                    priority[ipath] = content
-                else:
-                    collected[ipath] = content
+                tier = get_file_tier(name, ipath)
+                manifest.append((tier, size, name, ipath, item.get("download_url", "")))
 
     walk()
-    result = dict(priority)
-    for k, v in list(collected.items())[:max_files - len(result)]:
-        result[k] = v
-    return result
+
+    # ── Pass 2: Download in priority order, enforce token budget ──────────────
+    # Sort: tier ASC (1=best), then size ASC within tier (smaller = more signal/char)
+    manifest.sort(key=lambda x: (x[0], x[1]))
+
+    files = {}
+    total_chars = 0
+    skipped = []
+
+    for tier, size, name, path, url in manifest:
+        if total_chars >= TOTAL_CHAR_LIMIT:
+            skipped.append(path)
+            continue
+        remaining_budget = TOTAL_CHAR_LIMIT - total_chars
+        char_limit = min(CHAR_BUDGET[tier], remaining_budget)
+        content = fetch_file_content(url, token, char_limit)
+        if content is None:
+            continue
+        files[path] = content
+        total_chars += len(content)
+
+    stats = {
+        "files_fetched":   len(files),
+        "files_skipped":   len(skipped),
+        "total_chars":     total_chars,
+        "dirs_crawled":    dirs_crawled,
+        "manifest_size":   len(manifest),
+        "budget_hit":      total_chars >= TOTAL_CHAR_LIMIT,
+    }
+    return files, stats
 
 
 def get_commit_history(owner: str, repo: str, token: Optional[str]) -> list:
@@ -372,7 +448,6 @@ def analyze():
     _user_key    = (data.get("api_key") or "").strip()
     github_token = os.environ.get("GITHUB_TOKEN") or _user_token or None
     api_key      = os.environ.get("ANTHROPIC_API_KEY") or _user_key or None
-    max_files    = int(data.get("max_files", 20))
 
     if not repo_url:
         return jsonify({"error": "Repository URL is required"}), 400
@@ -397,19 +472,22 @@ def analyze():
             commit_history = get_commit_history(owner, repo, github_token)
 
             repo_display = (repo_info.get("name") or repo)
-            yield "data: " + json.dumps({"step": "fetch_files", "msg": "Collecting files from " + repo_display + "…"}) + "\n\n"
-            files = collect_repo_files(owner, repo, github_token, max_files)
+            yield "data: " + json.dumps({"step": "fetch_files", "msg": "Scanning repo and selecting files from " + repo_display + "..."}) + "\n\n"
+            files, file_stats = collect_repo_files(owner, repo, github_token)
             if not files:
                 yield "data: " + json.dumps({"error": "No readable files found in repository."}) + "\n\n"
                 return
 
-            file_count   = len(files)
+            file_count   = file_stats["files_fetched"]
             commit_count = len(commit_history)
             mode_label   = "Standard (5 categories)" if mode == "standard" else "Full + Cheat Detection"
+            budget_note  = " [budget cap, " + str(file_stats["files_skipped"]) + " skipped]" if file_stats["budget_hit"] else ""
             yield "data: " + json.dumps({
                 "step": "analyzing",
-                "msg": "Running " + mode_label + " on " + str(file_count) + " files…",
-                "file_count": file_count,
+                "msg": "Running " + mode_label + " on " + str(file_count) + " files" + budget_note + "...",
+                "file_count":    file_count,
+                "files_skipped": file_stats["files_skipped"],
+                "budget_hit":    file_stats["budget_hit"],
             }) + "\n\n"
 
             files_text = "\n\n".join("### " + p + "\n```\n" + c + "\n```" for p, c in files.items())
@@ -454,17 +532,21 @@ def analyze():
                 "topic":   HACKATHON.get("topic") or "",
             }
             result["repo_info"] = {
-                "name":         (repo_info.get("name") or repo),
-                "description":  (repo_info.get("description") or ""),
-                "language":     (repo_info.get("language") or "Unknown"),
-                "stars":        repo_info.get("stargazers_count", 0),
-                "forks":        repo_info.get("forks_count", 0),
-                "is_fork":      repo_info.get("fork", False),
-                "created_at":   (repo_info.get("created_at") or ""),
-                "pushed_at":    (repo_info.get("pushed_at") or ""),
-                "url":          repo_url,
-                "file_count":   file_count,
-                "commit_count": commit_count,
+                "name":          (repo_info.get("name") or repo),
+                "description":   (repo_info.get("description") or ""),
+                "language":      (repo_info.get("language") or "Unknown"),
+                "stars":         repo_info.get("stargazers_count", 0),
+                "forks":         repo_info.get("forks_count", 0),
+                "is_fork":       repo_info.get("fork", False),
+                "created_at":    (repo_info.get("created_at") or ""),
+                "pushed_at":     (repo_info.get("pushed_at") or ""),
+                "url":           repo_url,
+                "file_count":    file_count,
+                "files_skipped": file_stats["files_skipped"],
+                "manifest_size": file_stats["manifest_size"],
+                "budget_hit":    file_stats["budget_hit"],
+                "total_chars":   file_stats["total_chars"],
+                "commit_count":  commit_count,
             }
 
             yield "data: " + json.dumps({"step": "done", "result": result}) + "\n\n"

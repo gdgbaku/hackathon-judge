@@ -272,7 +272,7 @@ async function analyze(){
         if(d.step==='fetch_meta')setStep(1);
         if(d.step==='fetch_commits')setStep(2,d.msg);
         if(d.step==='fetch_files')setStep(3);
-        if(d.step==='analyzing'){setStep(4,d.msg);if(d.file_count)document.getElementById('step3txt').textContent=d.file_count+' files collected';}
+        if(d.step==='analyzing'){setStep(4,d.msg);if(d.file_count){let s=d.file_count+' files collected';if(d.files_skipped>0)s+=' ('+d.files_skipped+' skipped - large repo)';document.getElementById('step3txt').textContent=s;}}
         if(d.step==='heartbeat')document.getElementById('heartbeatMsg').textContent='Thinking: '+(d.msg||'Claude is working...');
         if(d.step==='done'){setStep(5);activeReader=null;setTimeout(()=>{document.getElementById('progressCard').className='card progress-card';document.getElementById('analyzeBtn').disabled=false;document.getElementById('heartbeatMsg').textContent='';renderResults(d.result);},400);}
       }
