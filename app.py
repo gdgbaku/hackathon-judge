@@ -48,40 +48,171 @@ def load_hackathon_config() -> dict:
 HACKATHON = load_hackathon_config()
 
 # ── Constants ──────────────────────────────────────────────────────────────────
+
+# Binary / media / generated files — never useful for code review
 SKIP_EXTENSIONS = {
+    # Images & media
     ".png",".jpg",".jpeg",".gif",".svg",".ico",".webp",".bmp",
-    ".mp4",".mp3",".wav",".zip",".tar",".gz",".lock",".pdf",
-    ".ttf",".woff",".woff2",".eot",".bin",".exe",".dll",".map",
-    ".min.js",".min.css",".d.ts",
-}
-SKIP_DIRS = {
-    "node_modules",".git","vendor","dist","build","__pycache__",
-    ".next",".nuxt","coverage",".venv","venv","env","migrations",
-    "static","public","assets","images","fonts","test","tests",
-    "__tests__","spec","specs","fixtures","mocks","stubs",
+    ".mp4",".mp3",".wav",".ogg",".flac",".avi",".mov",
+    # Archives & binaries
+    ".zip",".tar",".gz",".7z",".rar",".jar",".war",".aar",
+    ".bin",".exe",".dll",".so",".dylib",".o",".a",".lib",
+    ".apk",".ipa",".dex",".class",
+    # Fonts & docs
+    ".ttf",".woff",".woff2",".eot",".otf",".pdf",
+    # Generated / lock / compiled
+    ".lock",".map",".pyc",".pyo",".pyd",".cache",
+    ".d.ts",                     # TypeScript declaration files
+    # IDE & OS
+    ".DS_Store",".iml",
 }
 
-# Priority tiers — higher tier = fetched first, given more token budget
-FILE_PRIORITY = {
-    # Tier 1 — core entrypoints & config (always include, full content)
-    1: {"readme.md","readme.txt","readme","main.py","app.py","server.py",
-        "index.js","index.ts","app.js","app.ts","server.js","server.ts",
-        "main.go","main.rs","main.java","package.json","requirements.txt",
-        "pyproject.toml","go.mod","cargo.toml","dockerfile","docker-compose.yml",
-        "docker-compose.yaml",".env.example","config.py","settings.py","config.js",
-        "config.ts","next.config.js","vite.config.js","vite.config.ts"},
-    # Tier 2 — routers, models, core logic
-    2: {"routes.py","models.py","schema.py","schemas.py","views.py",
-        "controllers.py","handlers.py","middleware.py","auth.py","db.py",
-        "database.py","router.js","router.ts","routes.js","routes.ts",
-        "models.js","models.ts","api.js","api.ts","store.js","store.ts"},
+# Directories that are never worth crawling
+SKIP_DIRS = {
+    # Dependency dirs
+    "node_modules","vendor","packages","bower_components",
+    ".gradle","gradle",".maven",
+    # Build output
+    "dist","build","out","output","bin","obj","target",
+    "release","debug","__pycache__","*.egg-info",
+    # iOS / Android generated
+    "pods","carthage","xcuserdata","*.xcworkspace",
+    "generatedava","generatedkotlin","r",
+    # Version control & CI
+    ".git",".svn",
+    # Virtual environments
+    ".venv","venv","env",".env","virtualenv",
+    # Coverage & test cache
+    "coverage",".nyc_output",".pytest_cache","htmlcov",
+    # Framework generated
+    ".next",".nuxt",".expo",".dart_tool",".flutter-plugins",
+    # Assets (skip large static dirs, keep src assets)
+    "migrations","__generated__",
+}
+
+# ── Language-aware file priority ───────────────────────────────────────────────
+# Tier 1 = entrypoints, manifests, core config → 6000 chars each
+# Tier 2 = key logic files, service/model/controller → 3000 chars each
+# Tier 3 = everything else that passed filters → 1500 chars each
+
+# Tier 1: exact filenames (lowercased) that are always the most important
+TIER1_NAMES = {
+    # Universal
+    "readme.md","readme.txt","readme.rst","readme",
+    "dockerfile","docker-compose.yml","docker-compose.yaml",
+    ".env.example","makefile","justfile",
+    # Python
+    "main.py","app.py","server.py","wsgi.py","asgi.py",
+    "manage.py","cli.py","run.py",
+    "requirements.txt","pyproject.toml","setup.py","setup.cfg","pipfile",
+    # JavaScript / TypeScript
+    "index.js","index.ts","app.js","app.ts","server.js","server.ts",
+    "main.js","main.ts",
+    "package.json","next.config.js","next.config.ts",
+    "vite.config.js","vite.config.ts","webpack.config.js",
+    "tsconfig.json","angular.json",
+    # Go
+    "main.go","go.mod","go.sum",
+    # Rust
+    "main.rs","lib.rs","cargo.toml","cargo.lock",
+    # Java / Kotlin / Android
+    "mainactivity.java","mainactivity.kt",
+    "application.java","application.kt",
+    "build.gradle","build.gradle.kts","pom.xml","settings.gradle",
+    "androidmanifest.xml","gradle-wrapper.properties",
+    "proguard-rules.pro",
+    # C#
+    "program.cs","startup.cs","app.cs",
+    "appsettings.json","appsettings.development.json",
+    # Swift / iOS
+    "appdelegate.swift","scenedelegate.swift","contentview.swift",
+    "info.plist","package.resolved",
+    # Dart / Flutter
+    "main.dart","pubspec.yaml","pubspec.lock",
+    # Ruby
+    "application.rb","config.ru","gemfile","gemfile.lock","rakefile",
+    # PHP
+    "index.php","app.php","composer.json","composer.lock",
+    # C / C++
+    "main.c","main.cpp","cmakelists.txt",
+    # Elixir
+    "application.ex","mix.exs","router.ex",
+}
+
+# Tier 2: exact filenames for important-but-not-entrypoint files
+TIER2_NAMES = {
+    # Python
+    "models.py","views.py","routes.py","urls.py","serializers.py",
+    "schemas.py","schema.py","controllers.py","handlers.py",
+    "middleware.py","auth.py","db.py","database.py","config.py",
+    "settings.py","utils.py","helpers.py","services.py",
+    # JS / TS
+    "router.js","router.ts","routes.js","routes.ts",
+    "models.js","models.ts","api.js","api.ts",
+    "store.js","store.ts","reducers.js","reducers.ts",
+    "context.js","context.ts","hooks.js","hooks.ts",
+    "middleware.js","middleware.ts","auth.js","auth.ts",
+    "db.js","db.ts","database.js","database.ts",
+    # Go
+    "handler.go","router.go","middleware.go","model.go","db.go",
+    "server.go","api.go","auth.go","config.go","util.go","utils.go",
+    # Java / Kotlin
+    "maincontroller.java","maincontroller.kt",
+    "userservice.java","userservice.kt",
+    "apiservice.java","apiservice.kt",
+    "repository.java","repository.kt",
+    "viewmodel.java","viewmodel.kt",
+    "database.java","database.kt",
+    # C#
+    "controller.cs","service.cs","repository.cs",
+    "dbcontext.cs","model.cs","program.cs",
+    # Swift
+    "viewmodel.swift","model.swift","networkmanager.swift",
+    "apimanager.swift","datamanager.swift","viewcontroller.swift",
+    # Dart / Flutter
+    "home_screen.dart","main_screen.dart","api_service.dart",
+    "database_helper.dart","models.dart","providers.dart",
+    # Ruby
+    "routes.rb","schema.rb","user.rb","application_controller.rb",
+    # PHP
+    "routes.php","controller.php","model.php","database.php",
+}
+
+# Tier 1 path pattern fragments — file is tier 1 if path contains these
+TIER1_PATH_PATTERNS = [
+    "/main.", "/app.", "/server.", "/index.", "/program.",
+    "/appdelegate.", "/scenedelegate.", "/contentview.",
+    "/mainactivity.", "/application.",
+    "/src/main", "/src/app", "/src/index",
+    "/api/", "/core/", "/lib/",
+]
+
+# Tier 2 path pattern fragments
+TIER2_PATH_PATTERNS = [
+    "/controller", "/service", "/repository", "/handler",
+    "/middleware", "/model", "/schema", "/router", "/route",
+    "/auth", "/database", "/viewmodel", "/provider",
+]
+
+# Source code extensions we care about — everything else in tier 3 is skipped
+# unless it's explicitly named tier1/tier2
+SOURCE_EXTENSIONS = {
+    ".py",".js",".ts",".jsx",".tsx",".go",".rs",
+    ".java",".kt",".kts",".swift",".dart",
+    ".cs",".c",".cpp",".h",".hpp",
+    ".rb",".php",".ex",".exs",".clj",".scala",
+    ".vue",".svelte",".html",".css",".scss",".sass",
+    ".sh",".bash",".zsh","",  # no extension = likely scripts
+    ".json",".yaml",".yml",".toml",".xml",".gradle",".plist",
+    ".tf",".hcl",".sql",".graphql",".proto",
+    ".md",".txt",".rst",        # docs
 }
 
 # Max characters to send per file depending on tier
 CHAR_BUDGET = {
     1: 6000,   # entrypoints — generous
     2: 3000,   # supporting files — moderate
-    3: 1500,   # everything else — just enough to detect patterns
+    3: 1200,   # everything else — just enough to detect patterns
 }
 TOTAL_CHAR_LIMIT = 80_000   # ~20k tokens — safe Claude context budget for analysis
 SCORE_RUBRIC = [
@@ -136,16 +267,30 @@ def fetch_file_content(url: str, token: Optional[str] = None, char_limit: int = 
 
 
 def get_file_tier(name: str, path: str) -> int:
+    """Classify file into priority tier 1/2/3 across any language stack."""
     name_lower = name.lower()
     path_lower = path.lower()
-    if name_lower in FILE_PRIORITY[1]:
+
+    # Exact filename matches first (fastest, most reliable)
+    if name_lower in TIER1_NAMES:
         return 1
-    if name_lower in FILE_PRIORITY[2]:
+    if name_lower in TIER2_NAMES:
         return 2
-    # Tier 1 by path pattern — entrypoint-like files anywhere
-    if any(part in path_lower for part in ["/main.", "/app.", "/server.", "/index.", "/api/"]):
+
+    # Path pattern matches — catches deep entrypoints like src/main/java/App.java
+    if any(p in path_lower for p in TIER1_PATH_PATTERNS):
         return 1
+    if any(p in path_lower for p in TIER2_PATH_PATTERNS):
+        return 2
+
     return 3
+
+
+def is_source_file(name: str) -> bool:
+    """Return True if file is worth reading (source code, config, docs)."""
+    ext = Path(name).suffix.lower()
+    # Also accept files with no extension (shell scripts, makefiles, etc.)
+    return ext in SOURCE_EXTENSIONS
 
 
 def collect_repo_files(owner: str, repo: str, token: Optional[str]) -> tuple[dict, dict]:
@@ -180,14 +325,20 @@ def collect_repo_files(owner: str, repo: str, token: Optional[str]) -> tuple[dic
                     walk(ipath, depth + 1)
             elif item.get("type") == "file":
                 ext = Path(name).suffix.lower()
-                # Skip known-bad extensions, minified files, huge files
+                # Hard skip: binary/media/generated
                 if ext in SKIP_EXTENSIONS:
                     continue
+                # Hard skip: minified files
                 if name.endswith(".min.js") or name.endswith(".min.css"):
                     continue
+                # Hard skip: very large files
                 if size > 200_000:
                     continue
                 tier = get_file_tier(name, ipath)
+                # For tier-3 files, only include known source extensions
+                # (avoids sending random binary-looking files with unknown extensions)
+                if tier == 3 and not is_source_file(name):
+                    continue
                 manifest.append((tier, size, name, ipath, item.get("download_url", "")))
 
     walk()
@@ -256,8 +407,50 @@ CATEGORY_META = {
 }
 
 
+
+def detect_languages(files: dict) -> list:
+    """Detect languages used from file extensions in the collected files."""
+    EXT_LANG = {
+        ".py":    "Python",
+        ".js":    "JavaScript", ".jsx": "JavaScript",
+        ".ts":    "TypeScript", ".tsx": "TypeScript",
+        ".go":    "Go",
+        ".rs":    "Rust",
+        ".java":  "Java",
+        ".kt":    "Kotlin",   ".kts": "Kotlin",
+        ".swift": "Swift",
+        ".dart":  "Dart/Flutter",
+        ".cs":    "C#",
+        ".c":     "C",
+        ".cpp":   "C++",      ".cc": "C++", ".cxx": "C++",
+        ".h":     "C/C++",    ".hpp": "C++",
+        ".rb":    "Ruby",
+        ".php":   "PHP",
+        ".ex":    "Elixir",   ".exs": "Elixir",
+        ".scala": "Scala",
+        ".clj":   "Clojure",
+        ".vue":   "Vue.js",
+        ".svelte":"Svelte",
+        ".r":     "R",
+        ".m":     "Objective-C",
+        ".sh":    "Shell",    ".bash": "Shell",
+        ".sql":   "SQL",
+        ".tf":    "Terraform",
+        ".graphql":"GraphQL", ".gql": "GraphQL",
+        ".proto": "Protobuf",
+    }
+    seen = {}
+    for path in files:
+        ext = Path(path).suffix.lower()
+        lang = EXT_LANG.get(ext)
+        if lang:
+            seen[lang] = seen.get(lang, 0) + 1
+    # Return top languages by file count
+    return [l for l, _ in sorted(seen.items(), key=lambda x: -x[1])]
+
+
 def build_prompt(repo_info: dict, files_text: str, repo_url: str,
-                 commit_history: list, mode: str) -> str:
+                 commit_history: list, mode: str, langs: list) -> str:
 
     hackathon_name  = HACKATHON.get("name") or "Hackathon"
     hackathon_topic = HACKATHON.get("topic") or ""
@@ -401,13 +594,16 @@ Authenticity scoring:
   "tech_stack_detected": ["<tech1>","<tech2>"]
 }"""
 
+    langs_str = ", ".join(langs[:6]) if langs else (repo_info.get("language") or "Unknown")
+
     return (
         "Judge this submission for the " + hackathon_name + ".\n\n"
         "## Repository\n"
         "- URL: " + repo_url + "\n"
         "- Name: " + (repo_info.get("name") or "Unknown") + "\n"
         "- Description: " + (repo_info.get("description") or "No description") + "\n"
-        "- Language: " + (repo_info.get("language") or "Unknown") + "\n"
+        "- Languages detected: " + langs_str + "\n"
+        "- Primary language (GitHub): " + (repo_info.get("language") or "Unknown") + "\n"
         "- Created: " + (repo_info.get("created_at") or "Unknown") + "\n"
         "- Last Push: " + (repo_info.get("pushed_at") or "Unknown") + "\n"
         "- Is Fork: " + str(repo_info.get("fork", False)) + "\n"
@@ -491,7 +687,8 @@ def analyze():
             }) + "\n\n"
 
             files_text = "\n\n".join("### " + p + "\n```\n" + c + "\n```" for p, c in files.items())
-            prompt = build_prompt(repo_info, files_text, repo_url, commit_history, mode)
+            langs = detect_languages(files)
+            prompt = build_prompt(repo_info, files_text, repo_url, commit_history, mode, langs)
 
             client    = anthropic.Anthropic(api_key=api_key)
             raw_chunks = []
@@ -535,6 +732,7 @@ def analyze():
                 "name":          (repo_info.get("name") or repo),
                 "description":   (repo_info.get("description") or ""),
                 "language":      (repo_info.get("language") or "Unknown"),
+                "languages_detected": langs,
                 "stars":         repo_info.get("stargazers_count", 0),
                 "forks":         repo_info.get("forks_count", 0),
                 "is_fork":       repo_info.get("fork", False),
