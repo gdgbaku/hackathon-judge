@@ -88,15 +88,6 @@ input::placeholder{color:var(--muted)}
 .sc-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:8px}
 .sc-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
 .sc-fb{font-size:11px;color:var(--muted);line-height:1.6}
-.issues-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-@media(max-width:600px){.issues-grid{grid-template-columns:1fr}}
-.issues-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
-.issues-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.issue-list{list-style:none}
-.issue-list li{font-size:11px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border);line-height:1.5}
-.issue-list li:last-child{border-bottom:none}
-.issue-list li::before{content:'-> ';color:var(--red)}
-.issue-list.clean li::before{color:var(--accent);content:'ok '}
 .orig-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .orig-score-ring{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'Syne',sans-serif;flex-shrink:0}
 .orig-score-num{font-size:22px;font-weight:800;line-height:1}.orig-score-lbl{font-size:9px;letter-spacing:1px;opacity:.8}
@@ -106,13 +97,6 @@ input::placeholder{color:var(--muted)}
 .flag-section{font-size:11px}.flag-title{font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
 .flag-item{padding:3px 0;color:var(--muted);line-height:1.5}.flag-item::before{content:'* '}
 .commit-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-style:italic}
-.sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-@media(max-width:500px){.sw-grid{grid-template-columns:1fr}}
-.sw-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
-.sw-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
-.sw-title.green{color:var(--accent)}.sw-title.amber{color:var(--warn)}
-.sw-item{display:flex;gap:10px;font-size:12px;line-height:1.6;margin-bottom:8px}
-.sw-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:7px}
 .verdict-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .verdict-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
 .rec-badge{padding:8px 20px;border-radius:6px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
@@ -121,8 +105,6 @@ input::placeholder{color:var(--muted)}
 .rec-reject{background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.3)}
 .dq-banner{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.4);border-radius:8px;padding:14px 18px;margin-bottom:16px;color:var(--red);font-size:13px;font-weight:600}
 .verdict-text{font-size:13px;line-height:1.8;color:var(--muted);margin-bottom:14px}
-.tech-stack{display:flex;gap:8px;flex-wrap:wrap}
-.tech-tag{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent2);font-size:11px;font-weight:600;padding:4px 12px;border-radius:4px}
 .section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 .section-hdr-icon{font-size:17px}.section-hdr-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}.section-hdr-sub{font-size:11px;color:var(--muted);margin-left:auto}
 .c-red{color:#ff4757}.c-orange{color:#ff6b35}.c-yellow{color:#ffd700}.c-green{color:#00ff88}.c-cyan{color:#00d4ff}
@@ -178,7 +160,6 @@ input::placeholder{color:var(--muted)}
           <span>All 5 scoring categories</span>
           <span>Security issue list</span>
           <span>Performance issue list</span>
-          <span>Strengths &amp; weaknesses</span>
           <span>Judge recommendation</span>
         </div>
         <span class="mode-tag tag-std">Recommended</span>
@@ -217,9 +198,7 @@ input::placeholder{color:var(--muted)}
   <div id="results">
     <div class="card" id="repoHeader"></div>
     <div class="scores-grid" id="scoresGrid"></div>
-    <div class="issues-grid" id="issuesGrid"></div>
     <div id="originalityCard"></div>
-    <div class="sw-grid" id="swGrid"></div>
     <div class="card" id="verdictCard"></div>
   </div>
   <div class="footer">Hackathon Code Judge · Powered by Claude Sonnet · GitHub API</div>
@@ -239,17 +218,11 @@ function renderResults(r){
   const cats=[{key:'prototype_quality',label:'Prototype Quality',icon:'🔧'},{key:'code_quality',label:'Code Quality',icon:'🏗️'},{key:'innovation_doc_topic',label:'Innovation, Docs & Topic',icon:'💡'},{key:'security',label:'Security',icon:'🔒'},{key:'performance_maintainability',label:'Performance & Maint.',icon:'⚡'}];
   document.getElementById('scoresGrid').innerHTML=cats.map((c,i)=>{const s=scores[c.key];if(s==null)return'';const col=sc(s),pct=(s/20*100).toFixed(1),tier=ti[c.key]||{};return'<div class="score-card" style="animation-delay:'+(i*.04)+'s"><div class="sc-header"><div class="sc-title">'+c.label+'</div><div style="font-size:15px">'+c.icon+'</div></div><div class="sc-num c-'+col+'">'+s+'<span style="font-size:12px;color:var(--muted)">/20</span></div><div class="sc-tier c-'+col+'">'+(tier.label||'')+'</div><div class="sc-bar"><div class="sc-bar-fill bar-'+col+'" style="width:0%" data-w="'+pct+'%"></div></div><div class="sc-fb">'+(fb[c.key]||'')+'</div></div>';}).join('');
   setTimeout(()=>{document.querySelectorAll('.sc-bar-fill').forEach(e=>{e.style.width=e.dataset.w;})},100);
-  const si=r.security_issues||[],pi=r.performance_issues||[];
-  const iH=(arr,cls)=>arr.length?'<ul class="issue-list '+cls+'">'+arr.map(i=>'<li>'+i+'</li>').join('')+'</ul>':'<ul class="issue-list clean"><li>No issues detected</li></ul>';
-  document.getElementById('issuesGrid').innerHTML='<div class="issues-panel"><div class="issues-title" style="color:var(--red)"><span>🔒</span> Security Issues</div>'+iH(si,'')+'</div><div class="issues-panel"><div class="issues-title" style="color:var(--warn)"><span>⚡</span> Performance & Maintainability Issues</div>'+iH(pi,'')+'</div>';
   const og=r.originality;
   if(og){const auth=og.authenticity_score||50;const vm={genuine:{lbl:'GENUINE',bg:'rgba(0,255,136,.08)',bd:'rgba(0,255,136,.3)',col:'#00ff88'},suspicious:{lbl:'SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'},likely_prebuilt:{lbl:'LIKELY PRE-BUILT',bg:'rgba(255,107,53,.08)',bd:'rgba(255,107,53,.3)',col:'#ff6b35'},plagiarized:{lbl:'PLAGIARIZED',bg:'rgba(255,71,87,.08)',bd:'rgba(255,71,87,.3)',col:'#ff4757'}}[og.verdict]||{lbl:'SUSPICIOUS',bg:'rgba(255,215,0,.08)',bd:'rgba(255,215,0,.3)',col:'#ffd700'};const rf=(og.red_flags||[]).map(f=>'<div class="flag-item">'+f+'</div>').join('')||'<div class="flag-item" style="color:var(--accent)">None detected</div>';const gf=(og.green_flags||[]).map(f=>'<div class="flag-item">'+f+'</div>').join('')||'<div class="flag-item">None detected</div>';document.getElementById('originalityCard').innerHTML='<div class="card" style="border-color:'+vm.bd+';background:'+vm.bg+';margin-bottom:24px"><div class="section-hdr" style="border-bottom-color:'+vm.bd+'"><span class="section-hdr-icon">🕵️</span><span class="section-hdr-title" style="color:'+vm.col+'">Cheat Detection</span><span class="section-hdr-sub">Authenticity '+auth+'/100</span></div><div class="orig-header"><div><div class="verdict-pill" style="background:rgba(0,0,0,.25);color:'+vm.col+';border:1px solid '+vm.bd+'">'+vm.lbl+'</div><div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:520px">'+(og.explanation||'')+'</div></div><div class="orig-score-ring" style="background:rgba(0,0,0,.2);border:2px solid '+vm.bd+'"><div class="orig-score-num" style="color:'+vm.col+'">'+auth+'</div><div class="orig-score-lbl" style="color:'+vm.col+'">/100</div></div></div><div class="orig-flags"><div class="flag-section"><div class="flag-title" style="color:var(--red)">Red Flags</div>'+rf+'</div><div class="flag-section"><div class="flag-title" style="color:var(--accent)">Green Flags</div>'+gf+'</div></div><div class="commit-note">'+(og.commit_pattern_analysis||'')+'</div></div>';}
-  else{document.getElementById('originalityCard').innerHTML='';}
-  document.getElementById('swGrid').innerHTML='<div class="sw-card"><div class="sw-title green">Strengths</div>'+(r.strengths||[]).map(s=>'<div class="sw-item"><div class="sw-dot" style="background:var(--accent)"></div><span>'+s+'</span></div>').join('')+'</div><div class="sw-card"><div class="sw-title amber">Areas to Improve</div>'+(r.weaknesses||[]).map(w=>'<div class="sw-item"><div class="sw-dot" style="background:var(--warn)"></div><span>'+w+'</span></div>').join('')+'</div>';
-  const rec=r.judge_recommendation||'borderline',rm={advance:['ADVANCE','rec-advance'],borderline:['BORDERLINE','rec-borderline'],reject:['REJECT','rec-reject']},[rl,rc]=rm[rec]||rm.borderline;
-  const tech=(r.tech_stack_detected||[]).map(t=>'<span class="tech-tag">'+t+'</span>').join('');
+  else{document.getElementById('originalityCard').innerHTML='';}  const rec=r.judge_recommendation||'borderline',rm={advance:['ADVANCE','rec-advance'],borderline:['BORDERLINE','rec-borderline'],reject:['REJECT','rec-reject']},[rl,rc]=rm[rec]||rm.borderline;
   const dqB=r.disqualify_recommendation?'<div class="dq-banner">DISQUALIFICATION RECOMMENDED — '+(r.disqualify_reason||'')+'</div>':'';
-  document.getElementById('verdictCard').innerHTML='<div class="verdict-header"><div class="verdict-title">Judge Verdict</div><div class="rec-badge '+rc+'">'+rl+'</div></div>'+dqB+'<div class="verdict-text">'+(r.overall_verdict||'')+'</div>'+(tech?'<div style="margin-bottom:8px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Tech Stack</div><div class="tech-stack">'+tech+'</div>':'');
+  document.getElementById('verdictCard').innerHTML='<div class="verdict-header"><div class="verdict-title">Judge Verdict</div><div class="rec-badge '+rc+'">'+rl+'</div></div>'+dqB+'<div class="verdict-text">'+(r.overall_verdict||'')+'</div>';
   document.getElementById('results').className='visible';
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
 }

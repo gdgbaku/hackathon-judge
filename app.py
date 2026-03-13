@@ -484,8 +484,8 @@ def build_prompt(repo_info: dict, files_text: str, repo_url: str,
 1. prototype_quality: Functional? Core feature works end-to-end? Stable, no crashes?
 2. code_quality: Architecture, patterns, readability, modularity, error handling, DRY.
 3. innovation_doc_topic: """ + topic_instruction + """
-4. security (20=clean, deduct per issue): hardcoded secrets, injection risks, unvalidated inputs, exposed credentials, missing auth. List up to 3 specific issues found.
-5. performance_maintainability (20=clean, deduct per issue): O(n²) loops, blocking I/O, redundant queries, deeply nested code, functions >100 lines, magic numbers, copy-paste. List up to 3 specific issues found."""
+4. security (20=clean, deduct per issue): hardcoded secrets, injection risks, unvalidated inputs, exposed credentials, missing auth.
+5. performance_maintainability (20=clean, deduct per issue): O(n²) loops, blocking I/O, redundant queries, deeply nested code, functions >100 lines, magic numbers, copy-paste."""
 
     # ── Cheat detection block (full mode only) ─────────────────────────────────
     cheat_block = ""
@@ -519,21 +519,16 @@ Score: 0-30=plagiarized, 31-55=suspicious, 56-75=mixed, 76-100=genuine."""
     "performance_maintainability": <int 0-20>
   },
   "category_feedback": {
-    "prototype_quality": "<2-3 sentences>",
-    "code_quality": "<2-3 sentences>",
-    "innovation_doc_topic": "<2-3 sentences covering innovation, docs, and topic fit>",
-    "security": "<2-3 sentences>",
-    "performance_maintainability": "<2-3 sentences>"
+    "prototype_quality": "<1-2 sentences>",
+    "code_quality": "<1-2 sentences>",
+    "innovation_doc_topic": "<1-2 sentences>",
+    "security": "<1-2 sentences>",
+    "performance_maintainability": "<1-2 sentences>"
   },
-  "security_issues": ["<specific issue with file/context>"],
-  "performance_issues": ["<specific issue with file/context>"],
-  "strengths": ["<s1>","<s2>","<s3>"],
-  "weaknesses": ["<w1>","<w2>","<w3>"],
   """ + originality_schema + """,
-  "overall_verdict": "<3-4 sentence overall judge verdict>",
+  "overall_verdict": "<2-3 sentence verdict>",
   "judge_recommendation": "advance"|"borderline"|"reject",
-  """ + disqualify + """,
-  "tech_stack_detected": ["<tech1>","<tech2>"]
+  """ + disqualify + """
 }"""
 
     langs_str = ", ".join(langs[:6]) if langs else (repo_info.get("language") or "Unknown")
