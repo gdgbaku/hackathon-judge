@@ -210,11 +210,12 @@ SOURCE_EXTENSIONS = {
 
 # Max characters to send per file depending on tier
 CHAR_BUDGET = {
-    1: 6000,   # entrypoints — generous
-    2: 3000,   # supporting files — moderate
-    3: 1200,   # everything else — just enough to detect patterns
+    1: 3000,   # entrypoints — enough to see structure + logic
+    2: 1500,   # supporting files — key patterns only
+    3:  600,   # everything else — just imports + signatures
 }
-TOTAL_CHAR_LIMIT = 80_000   # ~20k tokens — safe Claude context budget for analysis
+MAX_FILES        = 25       # hard cap: never send more than 25 files regardless of budget
+TOTAL_CHAR_LIMIT = 35_000   # ~9k tokens for code — leaves room for prompt + output
 SCORE_RUBRIC = [
     (0,  4,  "Non-Functional", "Prototype is non-functional or severely unstable."),
     (5,  8,  "Basic",          "Functional but lacks key features or has significant bugs."),
@@ -352,7 +353,7 @@ def collect_repo_files(owner: str, repo: str, token: Optional[str]) -> tuple[dic
     skipped = []
 
     for tier, size, name, path, url in manifest:
-        if total_chars >= TOTAL_CHAR_LIMIT:
+        if len(files) >= MAX_FILES or total_chars >= TOTAL_CHAR_LIMIT:
             skipped.append(path)
             continue
         remaining_budget = TOTAL_CHAR_LIMIT - total_chars
@@ -375,7 +376,7 @@ def collect_repo_files(owner: str, repo: str, token: Optional[str]) -> tuple[dic
 
 
 def get_commit_history(owner: str, repo: str, token: Optional[str]) -> list:
-    commits = github_api("/repos/" + owner + "/" + repo + "/commits?per_page=30", token)
+    commits = github_api("/repos/" + owner + "/" + repo + "/commits?per_page=15", token)
     if not isinstance(commits, list):
         return []
     return [{
@@ -462,7 +463,7 @@ def build_prompt(repo_info: dict, files_text: str, repo_url: str,
     )
     commits_text = "\n".join(
         "  [" + (c["date"] or "")[:10] + "] " + (c["author"] or "") + ": " + (c["message"] or "")
-        for c in commit_history[:20]
+        for c in commit_history[:12]
     ) or "  No commits found"
 
     topic_block = ""
@@ -478,81 +479,22 @@ def build_prompt(repo_info: dict, files_text: str, repo_url: str,
     )
 
     # ── Shared 5-category scoring block used by both modes ────────────────────
-    scoring_tasks = """## Your Scoring Tasks — 5 Categories, all scored 0-20
+    scoring_tasks = """## Score these 5 categories (0-20 each):
 
-### CATEGORY 1 — prototype_quality (0-20)
-Assess: Is the prototype functional and stable? Does the core feature work end-to-end?
-Are there critical bugs or crashes? Is the UX coherent? Is it a complete working demo?
-
-### CATEGORY 2 — code_quality (0-20)
-Assess: Code architecture, design patterns, readability, modularity, naming conventions,
-separation of concerns, error handling, DRY principle.
-
-### CATEGORY 3 — innovation_doc_topic (0-20)
-Assess ALL THREE together as one combined score:
-- Innovation: novelty of idea, creative technical approach, unique problem-solving
-- Documentation: README quality, setup instructions, inline comments, clarity
-- Topic Alignment: """ + topic_instruction + """
-
-### CATEGORY 4 — security (0-20)
-Assess security posture of the entire codebase:
-- Hardcoded API keys, passwords, secrets in source code
-- SQL injection risks or unsanitized query construction
-- Unvalidated/unsanitized user inputs used in sensitive operations
-- Exposed credentials in config files or environment handling
-- Missing authentication or authorization checks
-- Insecure HTTP usage where HTTPS is needed
-Score 20 = no issues found. Deduct per issue severity.
-List up to 5 specific issues found (file + line context if possible).
-
-### CATEGORY 5 — performance_maintainability (0-20)
-Assess BOTH performance AND maintainability as one combined score:
-Performance issues:
-- Nested loops O(n²) or worse on non-trivial data
-- Blocking synchronous I/O calls that should be async
-- Redundant DB/API queries inside loops
-- Loading entire large datasets into memory unnecessarily
-- Inefficient data structures for the use case
-Maintainability issues:
-- Deeply nested conditions (4+ levels)
-- Functions over 100 lines with no decomposition
-- Magic numbers/strings without constants
-- Copy-pasted code blocks (DRY violations)
-- Confusing or misleading variable/function names
-Score 20 = clean, efficient, well-structured. Deduct per issue found.
-List up to 5 specific issues found."""
+1. prototype_quality: Functional? Core feature works end-to-end? Stable, no crashes?
+2. code_quality: Architecture, patterns, readability, modularity, error handling, DRY.
+3. innovation_doc_topic: """ + topic_instruction + """
+4. security (20=clean, deduct per issue): hardcoded secrets, injection risks, unvalidated inputs, exposed credentials, missing auth. List up to 3 specific issues found.
+5. performance_maintainability (20=clean, deduct per issue): O(n²) loops, blocking I/O, redundant queries, deeply nested code, functions >100 lines, magic numbers, copy-paste. List up to 3 specific issues found."""
 
     # ── Cheat detection block (full mode only) ─────────────────────────────────
     cheat_block = ""
     if mode == "full":
         cheat_block = """
-## Cheat Detection Task
-
-Analyze commit history and code carefully. Be a detective.
-
-RED FLAGS (raise suspicion):
-- Single giant initial commit containing all code (classic pre-built dump)
-- Commit timestamps outside reasonable hackathon hours
-- Code style is inconsistent — looks like multiple different projects merged
-- README is too polished and comprehensive for a hackathon
-- Core logic is thin wrappers around existing libraries — minimal original work
-- Project structure matches a known boilerplate template exactly
-- Repo is a fork of another project
-- Git history was rewritten or force-pushed
-- Comments or file names reference a different project name
-
-GREEN FLAGS (genuine hackathon work):
-- Multiple commits showing iterative development
-- Commit messages reference debugging, fixing, trying things
-- Code has TODOs, rough edges, commented-out experiments
-- README has known issues or next steps section
-- Evidence of learning or pivoting mid-hackathon
-
-Authenticity scoring:
-- 0-30: Almost certainly pre-built or plagiarized
-- 31-55: Suspicious — significant pre-existing work
-- 56-75: Mixed — some pre-built, some hackathon work
-- 76-100: Genuine hackathon project"""
+## Cheat Detection (authenticity_score 0-100):
+Red flags: single giant commit, timestamps outside hackathon hours, inconsistent style, fork, rewritten history, thin wrappers only.
+Green flags: incremental commits, debug messages, TODOs, rough edges, pivoting evidence.
+Score: 0-30=plagiarized, 31-55=suspicious, 56-75=mixed, 76-100=genuine."""
 
     # ── JSON schema ────────────────────────────────────────────────────────────
     originality_schema = """"originality": null""" if mode != "full" else """"originality": {
@@ -690,13 +632,13 @@ def analyze():
             langs = detect_languages(files)
             prompt = build_prompt(repo_info, files_text, repo_url, commit_history, mode, langs)
 
-            client    = anthropic.Anthropic(api_key=api_key)
+            client    = anthropic.Anthropic(api_key=api_key, timeout=120.0)
             raw_chunks = []
             last_ping  = time.time()
 
             with client.messages.stream(
                 model="claude-sonnet-4-20250514",
-                max_tokens=4000,
+                max_tokens=2500,
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
